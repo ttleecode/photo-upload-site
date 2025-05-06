@@ -65,11 +65,15 @@
         // 確保拿到 Access Token
         async function ensureAccessToken() {
             if (!accessToken) {
-                await new Promise(resolve => {
+                await new Promise((resolve, reject) => {
                     tokenClient.requestAccessToken();
                     tokenClient.callback = (tokenResponse) => {
-                        accessToken = tokenResponse.access_token;
-                        resolve();
+                        if (tokenResponse.access_token) {
+                            accessToken = tokenResponse.access_token;
+                            resolve();
+                        } else {
+                            reject('Failed to get access token');
+                        }
                     };
                 });
             }
