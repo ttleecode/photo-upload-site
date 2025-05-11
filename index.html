@@ -132,10 +132,21 @@
             margin-top: 20px;
             display: inline-block;
         }
+        /* 新增：裝飾圖片的樣式 */
+        .header-image {
+            width: 100%;
+            max-width: 600px; /* 與 body 的 max-width 保持一致 */
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: block;
+        }
     </style>
 </head>
 <body>
     <div class="section" id="topPhotoArea">
+        <!-- 新增：添加上傳到 Netlify 的裝飾圖片 -->
+        <img src="/images/chinese_style1.jpg" alt="Wedding Decoration" class="header-image">
         <h1>Tim&Lena's Wedding!</h1>
     </div>
 
@@ -325,7 +336,7 @@
             // 步驟4: 處理文件選擇
             function handleFileSelection(event, type) {
                 const files = event.target.files;
-                log(`已選擇 ${files.length} 個${type === 'photo' ? '照片' : '影片'}文件`);
+                log(`已選擇 ${files.length} 個${type === 'photo' ? '照片' : '影片'}文件');
                 
                 if (!files || files.length === 0) {
                     showMessage(`未選擇任何${type === 'photo' ? '照片' : '影片'}`, 'error');
