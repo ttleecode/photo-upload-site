@@ -18,7 +18,7 @@
 
     <div class="section" id="usernameArea">
         <label for="username">上傳者姓名：</label>
-        <input type="text" id="username" placeholder="輸入姓名（例如 TT)" required>
+        <input type="text" id="username" placeholder="輸入姓名（例如 TT）" required>
     </div>
 
     <div class="section" id="messageArea">
@@ -64,45 +64,32 @@
             });
         }
 
-        // 初始化 Google Identity Services
+        // 初始化 Google Identity Services（使用 initTokenClient）
         function initGis() {
             return new Promise((resolve, reject) => {
-                const client = google.accounts.oauth2.initCodeClient({
+                const tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: CLIENT_ID,
                     scope: SCOPES,
-                    callback: (response) => {
-                        if (response.code) {
-                            // 使用 code 交換 access token（需要後端支持，此處簡化為假設已獲取）
-                            console.log('Authorization code:', response.code);
-                            // 注意：實際應用中需要後端交換 token，此處僅模擬
-                            fetchToken(response.code).then(resolve).catch(reject);
+                    callback: (tokenResponse) => {
+                        if (tokenResponse.access_token) {
+                            accessToken = tokenResponse.access_token;
+                            console.log('Access Token:', accessToken);
+                            resolve();
                         } else {
-                            reject(new Error('Failed to get authorization code'));
+                            console.error('Failed to get access token:', tokenResponse);
+                            reject(new Error('Failed to get access token: ' + JSON.stringify(tokenResponse)));
                         }
                     },
                 });
-                client.requestCode(); // 觸發 OAuth 流程
+                tokenClient.requestAccessToken();
             });
-        }
-
-        // 模擬後端交換 token（實際應用需要後端實現）
-        async function fetchToken(code) {
-            const response = await fetch('/exchangeToken', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: code, client_id: CLIENT_ID, client_secret: '你的 client_secret', redirect_uri: 'postmessage' }),
-            });
-            const data = await response.json();
-            accessToken = data.access_token;
-            console.log('Access Token:', accessToken);
-            return accessToken;
         }
 
         // 確保拿到 Access Token
         async function ensureAccessToken() {
             if (!accessToken) {
                 await initClient();
-                await initGis(); // 觸發 OAuth 流程
+                await initGis();
             }
             return accessToken;
         }
