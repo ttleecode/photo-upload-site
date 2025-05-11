@@ -85,7 +85,7 @@
                         resolve();
                     } else {
                         console.error('Failed to get access token:', tokenResponse);
-                        reject(new Error('Failed to get access token'));
+                        reject(new Error('Failed to get access token: ' + JSON.stringify(tokenResponse)));
                     }
                 };
                 tokenClient.requestAccessToken();
@@ -103,7 +103,7 @@
                 return files.length + 1;
             } catch (error) {
                 console.error('無法獲取檔案編號:', error);
-                throw error;
+                throw new Error('無法獲取檔案編號: ' + (error.message || JSON.stringify(error)));
             }
         }
 
@@ -132,11 +132,11 @@
                 } else {
                     const error = await response.json();
                     console.error('上傳失敗:', error);
-                    document.getElementById('uploadStatus').innerHTML += `<p>上傳失敗：${fileName} - ${error.error.message}</p>`;
+                    document.getElementById('uploadStatus').innerHTML += `<p>上傳失敗：${fileName} - ${error.error?.message || JSON.stringify(error)}</p>`;
                 }
             } catch (error) {
                 console.error('上傳過程中發生錯誤:', error);
-                document.getElementById('uploadStatus').innerHTML += `<p>上傳失敗：${fileName} - ${error.message}</p>`;
+                document.getElementById('uploadStatus').innerHTML += `<p>上傳失敗：${fileName} - ${error.message || '未知錯誤'}</p>`;
             }
         }
 
@@ -167,7 +167,8 @@
                     await uploadFile(files[i], username, message, nextNumber + i);
                 }
             } catch (error) {
-                document.getElementById('uploadStatus').innerHTML += `<p>錯誤：${error.message}</p>`;
+                console.error('拖放上傳錯誤:', error);
+                document.getElementById('uploadStatus').innerHTML += `<p>錯誤：${error.message || '未知錯誤'}</p>`;
             }
         });
 
@@ -196,7 +197,8 @@
                     await uploadFile(files[i], username, message, nextNumber + i);
                 }
             } catch (error) {
-                document.getElementById('uploadStatus').innerHTML += `<p>錯誤：${error.message}</p>`;
+                console.error('點擊上傳錯誤:', error);
+                document.getElementById('uploadStatus').innerHTML += `<p>錯誤：${error.message || '未知錯誤'}</p>`;
             }
         });
     </script>
