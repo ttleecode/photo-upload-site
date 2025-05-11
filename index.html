@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>照片上傳至 Google Drive</title>
+    <title>照片與影片上傳至 Google Drive</title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
@@ -51,6 +51,15 @@
         #loginBtn {
             background: #34a853;
         }
+        .upload-btn {
+            margin-bottom: 10px;
+        }
+        #photoBtn {
+            background: #4285f4;
+        }
+        #videoBtn {
+            background: #ea4335;
+        }
         #uploadStatus {
             margin-top: 20px;
         }
@@ -75,6 +84,11 @@
             color: #0c5460; 
             border: 1px solid #bee5eb;
         }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
         .loading-indicator {
             display: inline-block;
             width: 10px;
@@ -88,6 +102,11 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        .file-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
         #debug {
             font-family: monospace;
             font-size: 12px;
@@ -99,11 +118,19 @@
             overflow-y: auto;
             display: none;
         }
+        .toggle-debug {
+            font-size: 12px;
+            color: #666;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-top: 20px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
     <div class="section" id="topPhotoArea">
-        <h1>照片上傳平台</h1>
+        <h1>照片與影片上傳平台</h1>
     </div>
 
     <div class="section" id="usernameArea">
@@ -121,11 +148,18 @@
     </div>
 
     <div class="section" id="uploadArea" style="display: none;">
-        <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
-        <button id="selectPhotosBtn" class="btn">2. 選擇照片上傳</button>
+        <input type="file" id="photoInput" accept="image/*" multiple style="display: none;">
+        <input type="file" id="videoInput" accept="video/*" multiple style="display: none;">
+        
+        <button id="photoBtn" class="btn upload-btn">2a. 上傳照片</button>
+        <button id="videoBtn" class="btn upload-btn">2b. 上傳影片</button>
+        
+        <div class="file-info">支援的照片格式: JPG, PNG, GIF 等</div>
+        <div class="file-info">支援的影片格式: MP4, MOV, AVI 等 (建議大小小於 1GB)</div>
     </div>
 
     <div id="uploadStatus"></div>
+    <span class="toggle-debug" onclick="toggleDebug()">顯示/隱藏調試信息</span>
     <div id="debug"></div>
 
     <!-- 載入 Google API -->
@@ -136,10 +170,14 @@
         // 調試函數
         function log(message) {
             const debug = document.getElementById('debug');
-            debug.style.display = 'block';
             const timestamp = new Date().toLocaleTimeString();
             debug.innerHTML += `<div>[${timestamp}] ${message}</div>`;
             console.log(message);
+        }
+        
+        function toggleDebug() {
+            const debug = document.getElementById('debug');
+            debug.style.display = debug.style.display === 'none' ? 'block' : 'none';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -153,8 +191,10 @@
             // 元素
             const loginBtn = document.getElementById('loginBtn');
             const uploadArea = document.getElementById('uploadArea');
-            const fileInput = document.getElementById('fileInput');
-            const selectPhotosBtn = document.getElementById('selectPhotosBtn');
+            const photoInput = document.getElementById('photoInput');
+            const videoInput = document.getElementById('videoInput');
+            const photoBtn = document.getElementById('photoBtn');
+            const videoBtn = document.getElementById('videoBtn');
             const uploadStatus = document.getElementById('uploadStatus');
 
             let accessToken = null;
@@ -167,11 +207,22 @@
                 messageDiv.className = `status-message ${type}`;
                 messageDiv.textContent = message;
                 uploadStatus.prepend(messageDiv);
+                
+                // 自動滾動到新消息
+                window.scrollTo(0, document.body.scrollHeight);
             }
 
             // 清除所有消息
             function clearMessages() {
                 uploadStatus.innerHTML = '';
+            }
+            
+            // 格式化文件大小
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+                else if (bytes < 1073741824) return (bytes / 1048576).toFixed(2) + ' MB';
+                else return (bytes / 1073741824).toFixed(2) + ' GB';
             }
             
             // 步驟1: 初始化API並設置事件監聽器
@@ -205,11 +256,16 @@
                 
                 // 設置事件監聽器
                 loginBtn.addEventListener('click', requestAuth);
-                selectPhotosBtn.addEventListener('click', () => {
-                    log('選擇照片按鈕點擊');
-                    fileInput.click();
+                photoBtn.addEventListener('click', () => {
+                    log('照片按鈕點擊');
+                    photoInput.click();
                 });
-                fileInput.addEventListener('change', handleFileSelection);
+                videoBtn.addEventListener('click', () => {
+                    log('影片按鈕點擊');
+                    videoInput.click();
+                });
+                photoInput.addEventListener('change', (e) => handleFileSelection(e, 'photo'));
+                videoInput.addEventListener('change', (e) => handleFileSelection(e, 'video'));
             }
             
             // 步驟2: 請求授權
@@ -262,16 +318,16 @@
                 loginBtn.style.background = '#34a853';
                 uploadArea.style.display = 'block';
                 
-                showMessage('Google帳號連接成功！現在可以選擇照片上傳。', 'success');
+                showMessage('Google帳號連接成功！現在可以上傳照片或影片。', 'success');
             }
             
             // 步驟4: 處理文件選擇
-            function handleFileSelection(event) {
+            function handleFileSelection(event, type) {
                 const files = event.target.files;
-                log(`已選擇 ${files.length} 個文件`);
+                log(`已選擇 ${files.length} 個${type === 'photo' ? '照片' : '影片'}文件`);
                 
                 if (!files || files.length === 0) {
-                    showMessage('未選擇任何照片', 'error');
+                    showMessage(`未選擇任何${type === 'photo' ? '照片' : '影片'}`, 'error');
                     return;
                 }
                 
@@ -281,21 +337,41 @@
                     return;
                 }
                 
-                uploadFiles(files);
+                // 檢查文件大小
+                let totalSize = 0;
+                let largeFiles = [];
+                
+                for (let i = 0; i < files.length; i++) {
+                    totalSize += files[i].size;
+                    if (files[i].size > 1073741824) { // 1GB
+                        largeFiles.push(`${files[i].name} (${formatFileSize(files[i].size)})`);
+                    }
+                }
+                
+                // 警告大文件
+                if (largeFiles.length > 0) {
+                    showMessage(`警告: 檢測到較大的文件，上傳可能需要較長時間: ${largeFiles.join(', ')}`, 'warning');
+                }
+                
+                log(`總文件大小: ${formatFileSize(totalSize)}`);
+                uploadFiles(files, type);
             }
             
             // 步驟5: 獲取下一個文件編號
-            async function getNextFileNumber(username) {
+            async function getNextFileNumber(username, type) {
                 try {
-                    log(`查詢用戶 "${username}" 的現有文件`);
+                    log(`查詢用戶 "${username}" 的現有 ${type} 文件`);
+                    
+                    // 根據類型使用不同的前綴
+                    const prefix = type === 'photo' ? 'photo_' : 'video_';
                     
                     const response = await gapi.client.drive.files.list({
-                        q: `'${FOLDER_ID}' in parents and name contains '${username}_'`,
+                        q: `'${FOLDER_ID}' in parents and name contains '${prefix}${username}_'`,
                         fields: 'files(name)'
                     });
                     
                     const files = response.result.files || [];
-                    log(`找到 ${files.length} 個現有文件`);
+                    log(`找到 ${files.length} 個現有 ${type} 文件`);
                     
                     return files.length + 1;
                 } catch (error) {
@@ -305,9 +381,9 @@
             }
             
             // 步驟6: 上傳文件
-            async function uploadFiles(files) {
+            async function uploadFiles(files, type) {
                 clearMessages();
-                showMessage(`準備上傳 ${files.length} 張照片...`, 'info');
+                showMessage(`準備上傳 ${files.length} 個${type === 'photo' ? '照片' : '影片'}...`, 'info');
                 
                 const username = document.getElementById('username').value.trim();
                 const message = document.getElementById('message').value.trim();
@@ -321,26 +397,30 @@
                     gapi.client.setToken({ access_token: accessToken });
                     
                     // 獲取下一個文件編號
-                    const nextNumber = await getNextFileNumber(username);
+                    const nextNumber = await getNextFileNumber(username, type);
                     log(`開始從編號 ${nextNumber} 上傳`);
                     
                     // 顯示上傳總進度
-                    showMessage(`開始上傳 ${files.length} 張照片...`, 'info');
+                    showMessage(`開始上傳 ${files.length} 個${type === 'photo' ? '照片' : '影片'}...`, 'info');
+                    
+                    // 根據類型設置前綴
+                    const prefix = type === 'photo' ? 'photo_' : 'video_';
                     
                     // 逐個上傳文件
                     for (let i = 0; i < files.length; i++) {
                         const file = files[i];
                         const fileNumber = nextNumber + i;
-                        const fileName = `${username}_${fileNumber}`;
+                        const fileName = `${prefix}${username}_${fileNumber}`;
+                        const fileSize = formatFileSize(file.size);
                         
-                        log(`上傳中: ${fileName} (${i+1}/${files.length})`);
-                        showMessage(`上傳中: ${fileName} (${i+1}/${files.length})`, 'info');
+                        log(`上傳中: ${fileName} (${fileSize}) - (${i+1}/${files.length})`);
+                        showMessage(`上傳中: ${fileName} (${fileSize}) - (${i+1}/${files.length})`, 'info');
                         
                         // 創建元數據
                         const metadata = {
                             name: fileName,
                             parents: [FOLDER_ID],
-                            description: message || '無留言'
+                            description: `上傳者: ${username}, 留言: ${message || '無留言'}, 文件類型: ${type}, 原始文件名: ${file.name}`
                         };
                         
                         // 創建表單數據
@@ -348,25 +428,30 @@
                         form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
                         form.append('file', file);
                         
-                        // 上傳文件
-                        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                            method: 'POST',
-                            headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
-                            body: form
-                        });
-                        
-                        if (response.ok) {
-                            log(`${fileName} 上傳成功`);
-                            showMessage(`${fileName} 上傳成功`, 'success');
-                        } else {
-                            const error = await response.json();
-                            log(`${fileName} 上傳失敗: ${JSON.stringify(error)}`);
-                            showMessage(`${fileName} 上傳失敗: ${error.error?.message || JSON.stringify(error)}`, 'error');
+                        try {
+                            // 上傳文件
+                            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                                method: 'POST',
+                                headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
+                                body: form
+                            });
+                            
+                            if (response.ok) {
+                                log(`${fileName} 上傳成功`);
+                                showMessage(`${fileName} 上傳成功`, 'success');
+                            } else {
+                                const error = await response.json();
+                                log(`${fileName} 上傳失敗: ${JSON.stringify(error)}`);
+                                showMessage(`${fileName} 上傳失敗: ${error.error?.message || JSON.stringify(error)}`, 'error');
+                            }
+                        } catch (uploadError) {
+                            log(`${fileName} 上傳過程中出錯: ${uploadError.message}`);
+                            showMessage(`${fileName} 上傳錯誤: ${uploadError.message}`, 'error');
                         }
                     }
                     
                     log('所有文件上傳完畢');
-                    showMessage(`✓ 全部上傳完成！`, 'success');
+                    showMessage(`✓ 全部${type === 'photo' ? '照片' : '影片'}上傳完成！`, 'success');
                     
                 } catch (error) {
                     log(`上傳過程錯誤: ${error.message}`);
