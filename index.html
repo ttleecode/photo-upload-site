@@ -2,6 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>照片上傳至 Google Drive</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
@@ -9,7 +10,7 @@
         #photoDropZone { border: 2px dashed #ccc; padding: 20px; text-align: center; cursor: pointer; }
         #photoDropZone.dragover { background-color: #f0f0f0; }
         #uploadStatus { margin-top: 20px; }
-        #fileInput { display: none; } /* 隱藏檔案輸入框 */
+        #fileInput { display: none; }
     </style>
 </head>
 <body>
@@ -28,179 +29,209 @@
     </div>
 
     <div class="section" id="photoDropArea">
-        <!-- 使用 label 包裝 dropZone，關聯 fileInput -->
         <label for="fileInput">
             <div id="photoDropZone">拖曳照片到此處，或點擊選擇照片</div>
         </label>
-        <input type="file" id="fileInput" multiple accept="image/*">
+        <input type="file" id="fileInput" accept="image/*">
         <div id="uploadStatus"></div>
     </div>
 
     <!-- 載入 Google Identity Services SDK -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer onerror="console.error('Failed to load Google Identity Services SDK')"></script>
     <!-- 保留 gapi 用於 Drive API -->
-    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://apis.google.com/js/api.js" async defer onerror="console.error('Failed to load Google API JS')"></script>
     <script>
-        const CLIENT_ID = '1059727961676-mba09jlh8is4qrec86o8osrbd3cgld0l.apps.googleusercontent.com';
-        const API_KEY = 'AIzaSyDW8iK2KvaYHHTUw-n5cN6n8AfVMm3Msd8';
-        const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
-        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-        const FOLDER_ID = '1qnlf5S3Wt1QPJ2WupXcyTnJDm7rUDIrt';
+        document.addEventListener('DOMContentLoaded', () => {
+            const CLIENT_ID = '1059727961676-mba09jlh8is4qrec86o8osrbd3cgld0l.apps.googleusercontent.com';
+            const API_KEY = 'AIzaSyDW8iK2KvaYHHTUw-n5cN6n8AfVMm3Msd8';
+            const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+            const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+            const FOLDER_ID = '1qnlf5S3Wt1QPJ2WupXcyTnJDm7rUDIrt';
 
-        let accessToken;
+            let accessToken;
 
-        // 初始化 Google Drive API
-        function initClient() {
-            return new Promise((resolve, reject) => {
-                gapi.load('client', () => {
-                    gapi.client.init({
-                        apiKey: API_KEY,
-                        discoveryDocs: DISCOVERY_DOCS,
-                    }).then(() => {
-                        console.log('Google Drive API 初始化成功');
-                        resolve();
-                    }).catch((error) => {
-                        console.error('Google Drive API 初始化失敗:', error);
-                        let errorMessage = error.message || JSON.stringify(error);
-                        console.error('詳細錯誤:', errorMessage);
-                        reject(new Error('Google Drive API 初始化失敗: ' + errorMessage));
+            // 初始化 Google Drive API
+            function initClient() {
+                return new Promise((resolve, reject) => {
+                    if (typeof gapi === 'undefined') {
+                        reject(new Error('Google API library not loaded'));
+                        return;
+                    }
+                    gapi.load('client', () => {
+                        gapi.client.init({
+                            apiKey: API_KEY,
+                            discoveryDocs: DISCOVERY_DOCS,
+                        }).then(() => {
+                            console.log('Google Drive API 初始化成功');
+                            resolve();
+                        }).catch((error) => {
+                            console.error('Google Drive API 初始化失敗:', error);
+                            reject(new Error('Google Drive API 初始化失敗: ' + (error.message || JSON.stringify(error))));
+                        });
                     });
                 });
-            });
-        }
-
-        // 初始化 Google Identity Services（使用 initTokenClient）
-        function initGis() {
-            return new Promise((resolve, reject) => {
-                const tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: CLIENT_ID,
-                    scope: SCOPES,
-                    callback: (tokenResponse) => {
-                        if (tokenResponse.access_token) {
-                            accessToken = tokenResponse.access_token;
-                            console.log('Access Token:', accessToken);
-                            resolve();
-                        } else {
-                            console.error('Failed to get access token:', tokenResponse);
-                            reject(new Error('Failed to get access token: ' + JSON.stringify(tokenResponse)));
-                        }
-                    },
-                });
-                tokenClient.requestAccessToken();
-            });
-        }
-
-        // 確保拿到 Access Token
-        async function ensureAccessToken() {
-            if (!accessToken) {
-                await initClient();
-                await initGis();
             }
-            return accessToken;
-        }
 
-        // 獲取下一個檔案編號
-        async function getNextFileNumber(username) {
-            try {
-                const response = await gapi.client.drive.files.list({
-                    q: `'${FOLDER_ID}' in parents and name contains '${username}_'`,
-                    fields: 'files(name)',
+            // 初始化 Google Identity Services
+            function initGis() {
+                return new Promise((resolve, reject) => {
+                    if (typeof google === 'undefined') {
+                        reject(new Error('Google Identity Services SDK not loaded'));
+                        return;
+                    }
+                    const tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: CLIENT_ID,
+                        scope: SCOPES,
+                        callback: (tokenResponse) => {
+                            if (tokenResponse.access_token) {
+                                accessToken = tokenResponse.access_token;
+                                console.log('Access Token:', accessToken);
+                                resolve();
+                            } else {
+                                console.error('Failed to get access token:', tokenResponse);
+                                reject(new Error('Failed to get access token: ' + JSON.stringify(tokenResponse)));
+                            }
+                        },
+                    });
+                    tokenClient.requestAccessToken();
                 });
-                const files = response.result.files || [];
-                return files.length + 1;
-            } catch (error) {
-                console.error('無法獲取檔案編號:', error);
-                throw new Error('無法獲取檔案編號: ' + (error.message || JSON.stringify(error)));
             }
-        }
 
-        // 上傳照片
-        async function uploadFile(file, username, message, fileNumber) {
-            const fileName = `${username}_${fileNumber}`;
-            const metadata = {
-                name: fileName,
-                parents: [FOLDER_ID],
-                description: message || '無留言',
-            };
-
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            form.append('file', file);
-
-            try {
-                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                    method: 'POST',
-                    headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
-                    body: form,
-                });
-
-                if (response.ok) {
-                    document.getElementById('uploadStatus').innerHTML += `<p>上傳成功：${fileName}</p>`;
-                } else {
-                    const error = await response.json();
-                    console.error('上傳失敗:', error);
-                    document.getElementById('uploadStatus').innerHTML += `<p>上傳失敗：${fileName} - ${error.error?.message || JSON.stringify(error)}</p>`;
+            // 確保拿到 Access Token
+            async function ensureAccessToken() {
+                if (!accessToken) {
+                    try {
+                        await initClient();
+                        await initGis();
+                    } catch (error) {
+                        console.error('Failed to ensure access token:', error);
+                        throw error;
+                    }
                 }
-            } catch (error) {
-                console.error('上傳過程中發生錯誤:', error);
-                document.getElementById('uploadStatus').innerHTML += `<p>上傳失敗：${fileName} - ${error.message || '未知錯誤'}</p>`;
+                return accessToken;
             }
-        }
 
-        // 處理拖放和點擊上傳
-        const dropZone = document.getElementById('photoDropZone');
-        const fileInput = document.getElementById('fileInput');
+            // 獲取下一個檔案編號
+            async function getNextFileNumber(username) {
+                try {
+                    const response = await gapi.client.drive.files.list({
+                        q: `'${FOLDER_ID}' in parents and name contains '${username}_'`,
+                        fields: 'files(name)',
+                    });
+                    const files = response.result.files || [];
+                    return files.length + 1;
+                } catch (error) {
+                    console.error('無法獲取檔案編號:', error);
+                    throw new Error('無法獲取檔案編號: ' + (error.message || JSON.stringify(error)));
+                }
+            }
 
-        // 拖曳事件
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-        dropZone.addEventListener('drop', async (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
+            // 上傳照片
+            async function uploadFile(file, username, message, fileNumber) {
+                const fileName = `${username}_${fileNumber}`;
+                const metadata = {
+                    name: fileName,
+                    parents: [FOLDER_ID],
+                    description: message || '無留言',
+                };
 
-            const username = document.getElementById('username').value.trim();
-            const message = document.getElementById('message').value.trim();
-            if (!username) {
-                alert('請輸入姓名！');
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', file);
+
+                try {
+                    const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                        method: 'POST',
+                        headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
+                        body: form,
+                    });
+
+                    if (response.ok) {
+                        document.getElementById('uploadStatus').innerHTML += `<p>上傳成功：${fileName}</p>`;
+                    } else {
+                        const error = await response.json();
+                        console.error('上傳失敗:', fileName, error);
+                        document.getElementById('uploadStatus').innerHTML += `<p>上傳失敗：${fileName} - ${error.error?.message || JSON.stringify(error)}</p>`;
+                    }
+                } catch (error) {
+                    console.error('上傳過程中發生錯誤:', fileName, error);
+                    document.getElementById('uploadStatus').innerHTML += `<p>上傳失敗：${fileName} - ${error.message || '未知錯誤'}</p>`;
+                }
+            }
+
+            // 處理拖放和點擊上傳
+            const dropZone = document.getElementById('photoDropZone');
+            const fileInput = document.getElementById('fileInput');
+
+            if (!dropZone || !fileInput) {
+                console.error('Required DOM elements not found');
                 return;
             }
 
-            const files = e.dataTransfer.files;
-            try {
-                await ensureAccessToken();
-                let nextNumber = await getNextFileNumber(username);
-                for (let i = 0; i < files.length; i++) {
-                    await uploadFile(files[i], username, message, nextNumber + i);
-                }
-            } catch (error) {
-                console.error('拖放上傳錯誤:', error);
-                document.getElementById('uploadStatus').innerHTML += `<p>錯誤：${error.message || '未知錯誤'}</p>`;
-            }
-        });
+            // 拖曳事件
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
 
-        // 點擊上傳（通過 change 事件）
-        fileInput.addEventListener('change', async (e) => {
-            const username = document.getElementById('username').value.trim();
-            const message = document.getElementById('message').value.trim();
-            if (!username) {
-                alert('請輸入姓名！');
-                return;
-            }
-
-            const files = e.target.files;
-            try {
-                await ensureAccessToken();
-                let nextNumber = await getNextFileNumber(username);
-                for (let i = 0; i < files.length; i++) {
-                    await uploadFile(files[i], username, message, nextNumber + i);
+                const username = document.getElementById('username').value.trim();
+                const message = document.getElementById('message').value.trim();
+                if (!username) {
+                    alert('請輸入姓名！');
+                    return;
                 }
-            } catch (error) {
-                console.error('點擊上傳錯誤:', error);
-                document.getElementById('uploadStatus').innerHTML += `<p>錯誤：${error.message || '未知錯誤'}</p>`;
-            }
+
+                const files = e.dataTransfer.files;
+                try {
+                    await ensureAccessToken();
+                    let nextNumber = await getNextFileNumber(username);
+                    for (let i = 0; i < files.length; i++) {
+                        await uploadFile(files[i], username, message, nextNumber + i);
+                    }
+                } catch (error) {
+                    console.error('拖放上傳錯誤:', error);
+                    document.getElementById('uploadStatus').innerHTML += `<p>錯誤：${error.message || '未知錯誤'}</p>`;
+                }
+            });
+
+            // 增強觸控支援
+            dropZone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                fileInput.click();
+            });
+
+            // 點擊上傳
+            fileInput.addEventListener('change', async (e) => {
+                console.log('Change event triggered with files:', e.target.files);
+                const username = document.getElementById('username').value.trim();
+                const message = document.getElementById('message').value.trim();
+                if (!username) {
+                    alert('請輸入姓名！');
+                    return;
+                }
+
+                const files = e.target.files;
+                if (files.length === 0) {
+                    console.log('No files selected');
+                    return;
+                }
+
+                try {
+                    await ensureAccessToken();
+                    let nextNumber = await getNextFileNumber(username);
+                    for (let i = 0; i < files.length; i++) {
+                        console.log('Uploading file:', files[i].name);
+                        await uploadFile(files[i], username, message, nextNumber + i);
+                    }
+                } catch (error) {
+                    console.error('點擊上傳錯誤:', error);
+                    document.getElementById('uploadStatus').innerHTML += `<p>錯誤：${error.message || '未知錯誤'}</p>`;
+                }
+            });
         });
     </script>
 </body>
