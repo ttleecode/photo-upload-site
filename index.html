@@ -61,7 +61,18 @@
                         resolve();
                     }).catch((error) => {
                         console.error('Google API 初始化失敗:', error);
-                        reject(error);
+                        let errorMessage = '未知錯誤';
+                        if (error && error.result && error.result.error) {
+                            errorMessage = error.result.error.message || JSON.stringify(error.result.error);
+                        } else if (error && error.message) {
+                            errorMessage = error.message;
+                        } else if (error && error.details) {
+                            errorMessage = error.details;
+                        } else {
+                            errorMessage = JSON.stringify(error);
+                        }
+                        console.error('詳細錯誤:', errorMessage);
+                        reject(new Error('Google API 初始化失敗: ' + errorMessage));
                     });
                 });
             });
