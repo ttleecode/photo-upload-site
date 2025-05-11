@@ -141,13 +141,24 @@
             margin-bottom: 15px;
             display: block;
         }
+        /* 新增：補充說明樣式 */
+        .supplement {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
     <div class="section" id="topPhotoArea">
-        <!-- 新增：添加上傳到 Netlify 的裝飾圖片 -->
         <img src="/images/chinese_style1.jpg" alt="Wedding Decoration" class="header-image">
-        <h1>Tim&Lena's Wedding!</h1>
+        <h1>Tim & Lena's Wedding Day！</h1>
+        <!-- 新增：補充說明 -->
+        <div class="supplement">
+            歡迎大家上傳想要和我們分享的照片或影片，上傳內容只有新郎、新娘看的到不用擔心<br>
+            把我們婚禮上歡樂的點滴都留存起來吧！
+        </div>
     </div>
 
     <div class="section" id="usernameArea">
@@ -336,7 +347,7 @@
             // 步驟4: 處理文件選擇
             function handleFileSelection(event, type) {
                 const files = event.target.files;
-                log(`已選擇 ${files.length} 個${type === 'photo' ? '照片' : '影片'}文件');
+                log(`已選擇 ${files.length} 個${type === 'photo' ? '照片' : '影片'}文件`);
                 
                 if (!files || files.length === 0) {
                     showMessage(`未選擇任何${type === 'photo' ? '照片' : '影片'}`, 'error');
