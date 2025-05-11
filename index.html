@@ -102,7 +102,9 @@
                 if (!accessToken) {
                     try {
                         await initClient();
+                        console.log('Client initialized');
                         await initGis();
+                        console.log('GIS initialized, accessToken:', accessToken);
                     } catch (error) {
                         console.error('Failed to ensure access token:', error);
                         throw error;
@@ -145,7 +147,7 @@
                         headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
                         body: form,
                     });
-
+                    console.log('Upload response status:', response.status);
                     if (response.ok) {
                         document.getElementById('uploadStatus').innerHTML += `<p>上傳成功：${fileName}</p>`;
                     } else {
@@ -200,13 +202,26 @@
 
             // 增強觸控支援
             dropZone.addEventListener('touchstart', (e) => {
+                console.log('Touchstart event triggered');
                 e.preventDefault();
+                fileInput.click();
+            });
+
+            dropZone.addEventListener('click', () => {
+                console.log('Click event triggered');
                 fileInput.click();
             });
 
             // 點擊上傳
             fileInput.addEventListener('change', async (e) => {
                 console.log('Change event triggered with files:', e.target.files);
+                if (!e.target.files || e.target.files.length === 0) {
+                    console.error('No files selected or files inaccessible');
+                    document.getElementById('uploadStatus').innerHTML += '<p>錯誤：無法存取選擇的照片，請檢查相冊權限。</p>';
+                    alert('無法存取照片，請在 iPhone 設定 > 隱私 > 照片 中允許 Safari 存取相冊。');
+                    return;
+                }
+
                 const username = document.getElementById('username').value.trim();
                 const message = document.getElementById('message').value.trim();
                 if (!username) {
@@ -215,11 +230,6 @@
                 }
 
                 const files = e.target.files;
-                if (files.length === 0) {
-                    console.log('No files selected');
-                    return;
-                }
-
                 try {
                     await ensureAccessToken();
                     let nextNumber = await getNextFileNumber(username);
