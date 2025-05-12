@@ -73,6 +73,7 @@
         #confirmUploadBtn {
             background: #7b1fa2; /* 紫色，獨特 */
             display: none;
+            margin-top: 15px; /* 與留言區間距 */
         }
         #confirmUploadBtn:active {
             background: #6a1b9a;
@@ -268,7 +269,6 @@
         
         <button id="photoBtn" class="btn upload-btn">選擇照片</button>
         <button id="videoBtn" class="btn upload-btn">選擇影片</button>
-        <button id="confirmUploadBtn" class="btn">確認上傳</button>
         
         <div id="previewArea"></div>
         
@@ -279,6 +279,7 @@
             <label for="messageInput">留言或祝福（可選，將與檔案一起上傳）：</label>
             <textarea id="messageInput" placeholder="寫下您的祝福或想說的話..." maxlength="500"></textarea>
             <div id="charCount" class="char-count">0/500 字</div>
+            <button id="confirmUploadBtn" class="btn">確認上傳</button>
         </div>
     </div>
 
@@ -307,8 +308,11 @@
             // 設定
             const CLIENT_ID = '1059727961676-mba09jlh8is4qrec86o8osrbd3cgld0l.apps.googleusercontent.com';
             const API_KEY = 'AIzaSyDW8iK2KvaYHHTUw-n5cN6n8AfVMm3Msd8';
-            const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
-            const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+            const DISCOVERY_DOCS = [
+                "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
+                "https://www.googleapis.com/discovery/v1/apis/sheets/v4/rest"
+            ];
+            const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets';
             const FOLDER_ID = '1qnlf5S3Wt1QPJ2WupXcyTnJDm7rUDIrt';
 
             // 元素
@@ -606,8 +610,97 @@
                     throw error;
                 }
             }
+
+            // 步驟6: 尋找或創建試算表
+            async function findOrCreateSpreadsheet() {
+                try {
+                    log('搜尋現有試算表...');
+                    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                    const spreadsheetName = `Wedding_Messages_${dateStr}`;
+                    
+                    // 搜尋 FOLDER_ID 中的試算表
+                    const response = await gapi.client.drive.files.list({
+                        q: `'${FOLDER_ID}' in parents and name contains 'Wedding_Messages_' and mimeType='application/vnd.google-apps.spreadsheet'`,
+                        fields: 'files(id, name)'
+                    });
+                    
+                    const files = response.result.files || [];
+                    log(`找到 ${files.length} 個試算表`);
+                    
+                    if (files.length > 0) {
+                        // 返回第一個試算表的 ID
+                        log(`使用現有試算表: ${files[0].name} (ID: ${files[0].id})`);
+                        return files[0].id;
+                    }
+                    
+                    // 創建新試算表
+                    log(`未找到試算表，創建新試算表: ${spreadsheetName}`);
+                    const spreadsheet = await gapi.client.sheets.spreadsheets.create({
+                        properties: {
+                            title: spreadsheetName
+                        },
+                        sheets: [{
+                            properties: {
+                                title: 'Messages'
+                            }
+                        }]
+                    });
+                    
+                    const spreadsheetId = spreadsheet.result.spreadsheetId;
+                    log(`試算表創建成功: ${spreadsheetName} (ID: ${spreadsheetId})`);
+                    
+                    // 將試算表移動到 FOLDER_ID
+                    await gapi.client.drive.files.update({
+                        fileId: spreadsheetId,
+                        addParents: FOLDER_ID,
+                        removeParents: 'root'
+                    });
+                    log(`試算表已移動到資料夾: ${FOLDER_ID}`);
+                    
+                    // 設定標題
+                    await gapi.client.sheets.spreadsheets.values.update({
+                        spreadsheetId: spreadsheetId,
+                        range: 'Messages!A1:C1',
+                        valueInputOption: 'RAW',
+                        resource: {
+                            values: [['Username', 'Message', 'Timestamp']]
+                        }
+                    });
+                    log('試算表標題設定完成');
+                    
+                    return spreadsheetId;
+                } catch (error) {
+                    log(`試算表創建/搜尋失敗: ${error.message}`);
+                    showMessage(`試算表初始化失敗: ${error.message}，但檔案仍可上傳`, 'warning');
+                    throw error;
+                }
+            }
+
+            // 步驟7: 追加留言到試算表
+            async function appendMessageToSpreadsheet(username, message) {
+                try {
+                    const spreadsheetId = await findOrCreateSpreadsheet();
+                    const timestamp = new Date().toISOString();
+                    log(`追加留言到試算表: ${username}, ${message}`);
+                    
+                    await gapi.client.sheets.spreadsheets.values.append({
+                        spreadsheetId: spreadsheetId,
+                        range: 'Messages!A:C',
+                        valueInputOption: 'RAW',
+                        insertDataOption: 'INSERT_ROWS',
+                        resource: {
+                            values: [[username, message, timestamp]]
+                        }
+                    });
+                    
+                    log('留言成功追加到試算表');
+                } catch (error) {
+                    log(`試算表追加失敗: ${error.message}`);
+                    showMessage(`試算表更新失敗: ${error.message}，但檔案已上傳`, 'warning');
+                }
+            }
             
-            // 步驟6: 上傳照片、影片和留言（若有）
+            // 步驟8: 上傳照片、影片和留言（若有）
             async function uploadFiles(items, message) {
                 clearMessages();
                 const username = document.getElementById('username').value.trim();
@@ -735,7 +828,7 @@
                         }
                     }
                     
-                    // 上傳留言（若有）
+                    // 上傳留言（若有）並記錄到試算表
                     if (message) {
                         const nextMessageNumber = await getNextFileNumber(username, 'message');
                         const fileName = `message_${username}_${nextMessageNumber}.txt`;
@@ -766,6 +859,9 @@
                             if (response.ok) {
                                 log(`留言上傳成功: ${fileName} (ID: ${result.id})`);
                                 showMessage(`${fileName} 上傳成功`, 'success');
+                                
+                                // 記錄到試算表
+                                await appendMessageToSpreadsheet(username, message);
                             } else {
                                 log(`留言上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
                                 showMessage(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`, 'error');
