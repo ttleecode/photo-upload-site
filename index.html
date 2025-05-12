@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🤵🏻Tim & Lena's👰 Wedding Day！</title>
+    <!-- 引入 Lightbox2 CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
@@ -125,7 +127,7 @@
             width: 100%;
             background: #f0f0f0;
             border-radius: 4px;
-            margin: 10px 0;
+            margin: 10px ginx;
             overflow: hidden;
         }
         .progress-bar {
@@ -248,9 +250,57 @@
         .char-count.warning {
             color: #856404;
         }
+        /* 照片牆樣式 */
+        #photoWall {
+            margin: 20px 0;
+        }
+        .photo-wall-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .photo-wall-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .photo-wall-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+        .photo-wall-item:hover {
+            opacity: 0.9;
+        }
+        .photo-wall-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .photo-wall-empty {
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
+    <!-- 照片牆區塊 -->
+    <div class="section" id="photoWall">
+        <h2>💖 婚禮回憶照片牆 💖</h2>
+        <div class="supplement">看看大家分享的美好時刻！快來上傳你的照片吧！</div>
+        <div id="photoWallGrid" class="photo-wall-grid">
+            <div class="photo-wall-loading">
+                <span class="loading-indicator"></span> 載入照片中...
+            </div>
+        </div>
+    </div>
+
     <div class="section" id="topPhotoArea">
         <img src="/images/chinese_style2.png" alt="Wedding Decoration" class="header-image">
         <h1>🤵🏻Tim & Lena's👰<br>
@@ -276,8 +326,7 @@
     <div class="section" id="authArea">
         <button id="loginBtn" class="btn">1. 登入 Google 帳號</button>
         <div class="supplement warning">
-            ✨若忘記Google帳號or密碼，隨時跟新人們用Line等方式連絡傳遞吧✨<br>
-			✨若看到「未驗證」警告，請點擊「進階」並「繼續」以完成登入哦✨<br>
+            ✨若看到「未驗證」警告，請點擊「進階」並「繼續」以完成登入✨<br>
         </div>
     </div>
 
@@ -307,6 +356,8 @@
 
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
+    <!-- 引入 Lightbox2 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
 
     <script>
         // 調試函數
@@ -326,7 +377,7 @@
             // 設定
             const CLIENT_ID = '1059727961676-mba09jlh8is4qrec86o8osrbd3cgld0l.apps.googleusercontent.com';
             const API_KEY = 'AIzaSyDW8iK2KvaYHHTUw-n5cN6n8AfVMm3Msd8';
-            const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+            const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v belliapp.com/v3/rest"];
             const SCOPES = 'https://www.googleapis.com/auth/drive.file';
             const FOLDER_ID = '1qnlf5S3Wt1QPJ2WupXcyTnJDm7rUDIrt';
 
@@ -342,6 +393,7 @@
             const confirmUploadBtn = document.getElementById('confirmUploadBtn');
             const uploadStatus = document.getElementById('uploadStatus');
             const previewArea = document.getElementById('previewArea');
+            const photoWallGrid = document.getElementById('photoWallGrid');
 
             let accessToken = null;
             let tokenClient = null;
@@ -361,9 +413,8 @@
                 const messageDiv = document.createElement('div');
                 if (progress !== null) {
                     messageDiv.className = 'progress-container';
-                    messageDiv.innerHTML = `
-                        <div class="progress-bar" style="width: ${progress}%"></div>
-                    `;
+                    messageDiv.innerHTML = 
+                        `<div class="progress-bar" style="width: ${progress}%"></div>`;
                 } else {
                     messageDiv.className = `status-message ${type}`;
                     messageDiv.textContent = message;
@@ -456,6 +507,55 @@
                 log('已重置照片和影片輸入框');
             }
 
+            // 載入照片牆
+            async function loadPhotoWall() {
+                log('載入照片牆...');
+                photoWallGrid.innerHTML = '<div class="photo-wall-loading"><span class="loading-indicator"></span> 載入照片中...</div>';
+
+                try {
+                    const response = await gapi.client.drive.files.list({
+                        q: `'${FOLDER_ID}' in parents and mimeType contains 'image/' and properties has { key='isPublic' and value='true' }`,
+                        fields: 'files(id, name, webContentLink, thumbnailLink)',
+                        pageSize: 20
+                    });
+
+                    const files = response.result.files || [];
+                    log(`找到 ${files.length} 張公開照片`);
+
+                    photoWallGrid.innerHTML = '';
+                    if (files.length === 0) {
+                        photoWallGrid.innerHTML = '<div class="photo-wall-empty">目前尚無公開照片，快來上傳吧！</div>';
+                        return;
+                    }
+
+                    files.forEach(file => {
+                        const photoItem = document.createElement('div');
+                        photoItem.className = 'photo-wall-item';
+                        const img = document.createElement('img');
+                        img.src = file.thumbnailLink.replace('=s220', '=s800'); // 使用更高解析度縮圖
+                        img.alt = file.name;
+                        img.onload = () => log(`照片牆圖片載入成功: ${file.name}`);
+                        img.onerror = () => {
+                            log(`照片牆圖片載入失敗: ${file.name}`);
+                            photoItem.innerHTML = '<div class="preview-fallback">圖片無法載入</div>';
+                        };
+
+                        // Lightbox 支援
+                        const link = document.createElement('a');
+                        link.href = file.webContentLink;
+                        link.setAttribute('data-lightbox', 'photo-wall');
+                        link.setAttribute('data-title', file.name);
+                        link.appendChild(img);
+                        photoItem.appendChild(link);
+
+                        photoWallGrid.appendChild(photoItem);
+                    });
+                } catch (error) {
+                    log(`載入照片牆失敗: ${error.message}`);
+                    photoWallGrid.innerHTML = '<div class="photo-wall-empty">載入照片失敗，請稍後再試</div>';
+                }
+            }
+
             // 步驟1: 初始化API並設置事件監聽器
             function initializeApp() {
                 log('應用初始化中...');
@@ -486,6 +586,8 @@
                         loginBtn.disabled = false;
                         showMessage('初始化完成，請登入 Google 帳號', 'info');
                         
+                        // 初始化時載入照片牆
+                        loadPhotoWall();
                     } catch (error) {
                         log(`初始化失敗: ${error.message}`);
                         showMessage(`初始化 Google API 失敗: ${error.message}`, 'error');
@@ -680,7 +782,8 @@
                                 name: fileName,
                                 parents: [FOLDER_ID],
                                 mimeType: file.type,
-                                description: `上傳者: ${username}, 原始文件名: ${file.name}${message ? `, 留言: ${message}` : ''}`
+                                description: `上傳者: ${username}, 原始文件名: ${file.name}${message ? `, 留言: ${message}` : ''}`,
+                                properties: { isPublic: 'true' } // 預設公開，實際應用中可由新郎新娘審核
                             };
                             
                             const form = new FormData();
@@ -813,6 +916,8 @@
                     videoInput.value = '';
                     log('上傳完成，已重置照片、影片和留言輸入框');
                     
+                    // 上傳完成後重新載入照片牆
+                    loadPhotoWall();
                 } catch (error) {
                     log(`上傳過程錯誤: ${error.message}`);
                     showMessage(`上傳錯誤: ${error.message}`, 'error');
