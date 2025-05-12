@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🤵🏻Tim & Lena's👰 婚禮相簿</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 20px auto; 
+            padding: 0;
+            -webkit-text-size-adjust: 100%;
+            max-width: 1200px;
+            text-align: center;
+        }
+        .header-section {
+            margin-bottom: 30px;
+        }
+        .header-image {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .btn {
+            display: inline-block;
+            background: #4285f4;
+            color: white;
+            padding: 12px 20px;
+            margin: 15px 5px;
+            border-radius: 4px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .btn:active {
+            background: #3367d6;
+        }
+        .btn.back {
+            background: #ea4335;
+        }
+        .btn.back:active {
+            background: #c5221f;
+        }
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-gap: 15px;
+            padding: 10px;
+        }
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            aspect-ratio: 3/4;
+        }
+        .gallery-item:hover {
+            transform: translateY(-5px);
+        }
+        .gallery-item img, .gallery-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .item-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 10px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .gallery-item:hover .item-overlay {
+            opacity: 1;
+        }
+        .item-info {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .filter-section {
+            margin: 20px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        .filter-label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .filter-btn {
+            background: #f1f1f1;
+            border: 1px solid #ddd;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .filter-btn.active {
+            background: #4285f4;
+            color: white;
+            border-color: #4285f4;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        .loading-spinner {
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-top: 5px solid #4285f4;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.9);
+        }
+        .modal-content {
+            display: block;
+            margin: auto;
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+        .modal-caption {
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: #bbb;
+        }
+        .prev, .next {
+            cursor: pointer;
+            position: absolute;
+            top: 50%;
+            width: auto;
+            padding: 16px;
+            margin-top: -50px;
+            color: white;
+            font-weight: bold;
+            font-size: 30px;
+            transition: 0.6s ease;
+            border-radius: 0 3px 3px 0;
+            user-select: none;
+        }
+        .next {
+            right: 0;
+            border-radius: 3px 0 0 3px;
+        }
+        .prev:hover, .next:hover {
+            background-color: rgba(0,0,0,0.8);
+        }
+        .status-message {
+            padding: 10px;
+            margin: 10px auto;
+            border-radius: 4px;
+            font-size: 14px;
+            text-align: center;
+            max-width: 600px;
+        }
+        .error { 
+            background-color: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb;
+        }
+        .info { 
+            background-color: #e2f3fc; 
+            color: #0c5460; 
+            border: 1px solid #bee5eb;
+        }
+        .no-items {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        /* 響應式調整 */
+        @media (max-width: 768px) {
+            .gallery-container {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-section">
+        <img src="/images/chinese_style2.png" alt="Wedding Decoration" class="header-image">
+        <h1>🤵🏻Tim & Lena's👰<br>
+            婚禮相簿</h1>
+        <p>瀏覽賓客分享的美好時刻 💖</p>
+        
+        <a href="index.html" class="btn back">返回上傳頁面</a>
+    </div>
+
+    <div class="filter-section">
+        <span class="filter-label">顯示：</span>
+        <button class="filter-btn active" data-filter="all">全部</button>
+        <button class="filter-btn" data-filter="photo">照片</button>
+        <button class="filter-btn" data-filter="video">影片</button>
+        <button class="filter-btn" data-filter="my-uploads" id="myUploadsBtn">我的上傳</button>
+    </div>
+
+    <div id="statusMessage"></div>
+    
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <div id="gallery" class="gallery-container">
+        <!-- 相簿內容將由JavaScript動態載入 -->
+    </div>
+
+    <!-- 照片/影片查看模態框 -->
+    <div id="mediaModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <a class="prev" onclick="changeMedia(-1)">&#10094;</a>
+        <img id="modalImage" class="modal-content" style="display:none;">
+        <video id="modalVideo" class="modal-content" controls style="display:none;"></video>
+        <a class="next" onclick="changeMedia(1)">&#10095;</a>
+        <div id="modalCaption" class="modal-caption"></div>
+    </div>
+
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+
+    <script>
+        // 全局變量
+        const CLIENT_ID = '1059727961676-mba09jlh8is4qrec86o8osrbd3cgld0l.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyDW8iK2KvaYHHTUw-n5cN6n8AfVMm3Msd8';
+        const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+        const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
+        const FOLDER_ID = '1qnlf5S3Wt1QPJ2WupXcyTnJDm7rUDIrt';
+
+        let tokenClient = null;
+        let accessToken = null;
+        let isAuthenticated = false;
+        let allMediaItems = []; // 儲存所有媒體項目
+        let filteredItems = []; // 當前篩選後的項目
+        let currentMediaIndex = 0; // 當前查看的媒體索引
+        let myUploadUsername = ''; // 從localStorage獲取用戶名
+        
+        // 初始化應用
+        document.addEventListener('DOMContentLoaded', () => {
+            // 嘗試從localStorage獲取用戶名
+            myUploadUsername = localStorage.getItem('weddingAlbumUsername') || '';
+            
+            // 禁用"我的上傳"按鈕如果沒有用戶名
+            const myUploadsBtn = document.getElementById('myUploadsBtn');
+            if (!myUploadUsername) {
+                myUploadsBtn.disabled = true;
+                myUploadsBtn.title = '請先在上傳頁面輸入您的姓名';
+                myUploadsBtn.style.opacity = '0.5';
+            }
+            
+            initializeGoogleAPI();
+            setupFilterButtons();
+        });
+
+        // 初始化Google API
+        function initializeGoogleAPI() {
+            showStatus('正在載入相簿...', 'info');
+            
+            gapi.load('client', async () => {
+                try {
+                    await gapi.client.init({
+                        apiKey: API_KEY,
+                        discoveryDocs: DISCOVERY_DOCS
+                    });
+                    
+                    tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: CLIENT_ID,
+                        scope: SCOPES,
+                        callback: handleAuthResponse
+                    });
+                    
+                    // 自動嘗試認證
+                    requestAuth();
+                } catch (error) {
+                    showStatus(`無法初始化Google API: ${error.message}`, 'error');
+                    hideLoading();
+                }
+            });
+        }
+
+        // 請求授權
+        function requestAuth() {
+            if (!tokenClient) {
+                showStatus('無法連接Google認證服務，請稍後重試', 'error');
+                hideLoading();
+                return;
+            }
+            
+            if (gapi.client.getToken() !== null) {
+                google.accounts.oauth2.revoke(gapi.client.getToken().access_token, () => {
+                    gapi.client.setToken(null);
+                    tokenClient.requestAccessToken();
+                });
+            } else {
+                tokenClient.requestAccessToken();
+            }
+        }
+
+        // 處理認證響應
+        function handleAuthResponse(response) {
+            if (response.error !== undefined) {
+                showStatus(`Google認證失敗: ${response.error}`, 'error');
+                hideLoading();
+                return;
+            }
+            
+            accessToken = response.access_token;
+            isAuthenticated = true;
+            
+            // 載入媒體項目
+            loadMediaItems();
+        }
+
+        // 載入所有媒體項目
+        async function loadMediaItems() {
+            try {
+                if (!isAuthenticated) {
+                    showStatus('請先登入Google帳號', 'error');
+                    hideLoading();
+                    return;
+                }
+                
+                gapi.client.setToken({ access_token: accessToken });
+                
+                // 列出文件夾中的所有照片和影片文件
+                const response = await gapi.client.drive.files.list({
+                    q: `'${FOLDER_ID}' in parents and (name contains 'photo_' or name contains 'video_')`,
+                    fields: 'files(id, name, mimeType, thumbnailLink, imageMediaMetadata, videoMediaMetadata, description, createdTime)',
+                    orderBy: 'createdTime desc'
+                });
+                
+                const files = response.result.files || [];
+                
+                if (files.length === 0) {
+                    showStatus('相簿中暫無照片或影片', 'info');
+                    document.getElementById('gallery').innerHTML = '<div class="no-items">相簿目前是空的，快來分享您的照片吧！</div>';
+                    hideLoading();
+                    return;
+                }
+                
+                // 處理files資料
+                allMediaItems = await Promise.all(files.map(async file => {
+                    // 判斷是照片還是影片
+                    const isPhoto = file.name.startsWith('photo_');
+                    const mediaType = isPhoto ? 'photo' : 'video';
+                    
+                    // 從文件名中提取上傳者姓名
+                    const nameParts = file.name.split('_');
+                    let uploaderName = '';
+                    if (nameParts.length > 1) {
+                        // 假設格式為 photo_姓名_序號 或 video_姓名_序號
+                        uploaderName = nameParts[1];
+                    }
+                    
+                    // 從描述中提取留言
+                    let message = '';
+                    if (file.description) {
+                        const msgMatch = file.description.match(/留言: (.*?)($|,)/);
+                        if (msgMatch && msgMatch[1]) {
+                            message = msgMatch[1];
+                        }
+                    }
+                    
+                    // 對於影片獲取縮略圖
+                    let thumbnail = file.thumbnailLink;
+                    if (!thumbnail && mediaType === 'video') {
+                        try {
+                            const metadataResponse = await gapi.client.drive.files.get({
+                                fileId: file.id,
+                                fields: 'thumbnailLink'
+                            });
+                            thumbnail = metadataResponse.result.thumbnailLink;
+                        } catch (err) {
+                            // 如果沒有縮略圖，使用預設影片圖標
+                            thumbnail = '';
+                        }
+                    }
+                    
+                    // 獲取建立時間
+                    const createdTime = new Date(file.createdTime).toLocaleString('zh-TW');
+                    
+                    return {
+                        id: file.id,
+                        name: file.name,
+                        type: mediaType,
+                        mimeType: file.mimeType,
+                        thumbnail: thumbnail,
+                        uploader: uploaderName,
+                        message: message,
+                        createdTime: createdTime
+                    };
+                }));
+                
+                // 顯示全部媒體
+                filteredItems = [...allMediaItems];
+                displayMediaItems(filteredItems);
+                hideLoading();
+                
+            } catch (error) {
+                showStatus(`載入相簿失敗: ${error.message}`, 'error');
+                hideLoading();
+            }
+        }
+
+        // 顯示媒體項目
+        function displayMediaItems(items) {
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = '';
+            
+            if (items.length === 0) {
+                gallery.innerHTML = '<div class="no-items">沒有符合條件的照片或影片</div>';
+                return;
+            }
+            
+            items.forEach((item, index) => {
+                const mediaElement = document.createElement('div');
+                mediaElement.className = 'gallery-item';
+                mediaElement.onclick = () => openModal(index);
+                
+                let mediaContent = '';
+                if (item.type === 'photo') {
+                    // 獲取照片的縮略圖URL
+                    const thumbnailUrl = `https://drive.google.com/thumbnail?id=${item.id}&sz=w400`;
+                    mediaContent = `<img src="${thumbnailUrl}" alt="照片" loading="lazy">`;
+                } else {
+                    // 影片顯示縮略圖，如果有的話
+                    if (item.thumbnail) {
+                        mediaContent = `<img src="${item.thumbnail}" alt="影片縮略圖" loading="lazy">
+                                       <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);">
+                                           <svg width="48" height="48" viewBox="0 0 24 24" fill="white">
+                                               <path d="M8 5v14l11-7z"/>
+                                           </svg>
+                                       </div>`;
+                    } else {
+                        mediaContent = `<div style="width:100%; height:100%; background:#000; display:flex; align-items:center; justify-content:center;">
+                                           <svg width="48" height="48" viewBox="0 0 24 24" fill="white">
+                                               <path d="M8 5v14l11-7z"/>
+                                           </svg>
+                                       </div>`;
+                    }
+                }
+                
+                let infoText = `上傳者: ${item.uploader || '未知'}`;
+                if (item.message) {
+                    infoText += `<br>留言: ${item.message.length > 50 ? item.message.substring(0, 50) + '...' : item.message}`;
+                }
+                infoText += `<br>${item.createdTime}`;
+                
+                mediaElement.innerHTML = `
+                    ${mediaContent}
+                    <div class="item-overlay">${infoText}</div>
+                `;
+                
+                gallery.appendChild(mediaElement);
+            });
+        }
+
+        // 設置篩選按鈕
+        function setupFilterButtons() {
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // 更新按鈕狀態
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    // 應用篩選
+                    const filterType = button.getAttribute('data-filter');
+                    filterMediaItems(filterType);
+                });
+            });
+        }
+
+        // 篩選媒體項目
+        function filterMediaItems(filterType) {
+            if (allMediaItems.length === 0) return;
+            
+            switch (filterType) {
+                case 'photo':
+                    filteredItems = allMediaItems.filter(item => item.type === 'photo');
+                    break;
+                case 'video':
+                    filteredItems = allMediaItems.filter(item => item.type === 'video');
+                    break;
+                case 'my-uploads':
+                    if (myUploadUsername) {
+                        filteredItems = allMediaItems.filter(item => item.uploader === myUploadUsername);
+                    } else {
+                        showStatus('請先在上傳頁面輸入您的姓名', 'info');
+                        return;
+                    }
+                    break;
+                case 'all':
+                default:
+                    filteredItems = [...allMediaItems];
+                    break;
+            }
+            
+            displayMediaItems(filteredItems);
+        }
+
+        // 打開媒體檢視模態框
+        function openModal(index) {
+            currentMediaIndex = index;
+            const modal = document.getElementById('mediaModal');
+            const modalImage = document.getElementById('modalImage');
+            const modalVideo = document.getElementById('modalVideo');
+            const modalCaption = document.getElementById('modalCaption');
+            
+            const item = filteredItems[index];
+            
+            // 清除之前的內容
+            modalImage.style.display = 'none';
+            modalVideo.style.display = 'none';
+            modalImage.src = '';
+            modalVideo.src = '';
+            
+            if (item.type === 'photo') {
+                // 顯示高分辨率照片
+                modalImage.src = `https://drive.google.com/uc?id=${item.id}`;
+                modalImage.style.display = 'block';
+            } else {
+                // 顯示影片
+                modalVideo.src = `https://drive.google.com/uc?id=${item.id}`;
+                modalVideo.style.display = 'block';
+                modalVideo.load();
+            }
+            
+            // 設置說明文字
+            let captionText = `上傳者: ${item.uploader || '未知'}`;
+            if (item.message) {
+                captionText += `<br>留言: ${item.message}`;
+            }
+            captionText += `<br>${item.createdTime}`;
+            modalCaption.innerHTML = captionText;
+            
+            // 顯示模態框
+            modal.style.display = 'block';
+            
+            // 防止滾動背景
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 關閉模態框
+        function closeModal() {
+            const modal = document.getElementById('mediaModal');
+            const modalVideo = document.getElementById('modalVideo');
+            
+            // 如果正在播放視頻，停止播放
+            if (modalVideo) {
+                modalVideo.pause();
+            }
+            
+            modal.style.display = 'none';
+            
+            // 恢復滾動
+            document.body.style.overflow = 'auto';
+        }
+
+        // 切換上一個/下一個媒體
+        function changeMedia(direction) {
+            let newIndex = currentMediaIndex + direction;
+            
+            // 確保索引在有效範圍內
+            if (newIndex < 0) {
+                newIndex = filteredItems.length - 1;
+            } else if (newIndex >= filteredItems.length) {
+                newIndex = 0;
+            }
+            
+            openModal(newIndex);
+        }
+
+        // 顯示狀態消息
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.className = `status-message ${type}`;
+            statusDiv.textContent = message;
+        }
+
+        // 隱藏載入中指示器
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // 按ESC鍵關閉模態框
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
