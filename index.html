@@ -275,6 +275,7 @@
             let isAuthenticated = false;
             let selectedFiles = [];
             let currentFileType = null;
+            let videoURLs = []; // 儲存臨時 URL 以便清理
 
             // 顯示消息
             function showMessage(message, type = 'info') {
@@ -298,8 +299,26 @@
                 else return (bytes / 1073741824).toFixed(2) + ' GB';
             }
             
+            // 生成影片第一幀縮圖
+            function generateVideoThumbnail(video, callback) {
+                video.currentTime = 0; // 設置到第一幀
+                video.addEventListener('loadeddata', () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const thumbnail = canvas.toDataURL('image/jpeg');
+                    callback(thumbnail);
+                }, { once: true });
+            }
+
             // 顯示檔案預覽
             function previewFiles(files, type) {
+                // 清理舊的臨時 URL
+                videoURLs.forEach(url => URL.revokeObjectURL(url));
+                videoURLs = [];
+                
                 previewArea.innerHTML = '';
                 selectedFiles = Array.from(files);
                 currentFileType = type;
@@ -313,31 +332,51 @@
                 confirmUploadBtn.style.display = 'block';
 
                 selectedFiles.forEach((file, index) => {
-                    const reader = new FileReader();
                     const previewItem = document.createElement('div');
                     previewItem.className = 'preview-item';
 
-                    reader.onload = (e) => {
-                        const media = type === 'photo' ? document.createElement('img') : document.createElement('video');
-                        media.src = e.target.result;
-                        if (type === 'video') {
-                            media.muted = true;
-                            media.loop = false;
-                            media.controls = false;
-                        }
-                        previewItem.appendChild(media);
+                    if (type === 'photo') {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            previewItem.appendChild(img);
 
-                        const removeBtn = document.createElement('button');
-                        removeBtn.className = 'remove-btn';
-                        removeBtn.textContent = '×';
-                        removeBtn.onclick = () => {
-                            selectedFiles.splice(index, 1);
-                            previewFiles(selectedFiles, type);
-                            log(`已移除檔案: ${file.name}`);
+                            const removeBtn = document.createElement('button');
+                            removeBtn.className = 'remove-btn';
+                            removeBtn.textContent = '×';
+                            removeBtn.onclick = () => {
+                                selectedFiles.splice(index, 1);
+                                previewFiles(selectedFiles, type);
+                                log(`已移除檔案: ${file.name}`);
+                            };
+                            previewItem.appendChild(removeBtn);
                         };
-                        previewItem.appendChild(removeBtn);
-                    };
-                    reader.readAsDataURL(file);
+                        reader.readAsDataURL(file);
+                    } else {
+                        const videoURL = URL.createObjectURL(file);
+                        videoURLs.push(videoURL);
+                        const video = document.createElement('video');
+                        video.src = videoURL;
+                        video.muted = true;
+                        video.preload = 'metadata';
+
+                        generateVideoThumbnail(video, (thumbnail) => {
+                            video.poster = thumbnail;
+                            previewItem.appendChild(video);
+
+                            const removeBtn = document.createElement('button');
+                            removeBtn.className = 'remove-btn';
+                            removeBtn.textContent = '×';
+                            removeBtn.onclick = () => {
+                                selectedFiles.splice(index, 1);
+                                previewFiles(selectedFiles, type);
+                                log(`已移除檔案: ${file.name}`);
+                            };
+                            previewItem.appendChild(removeBtn);
+                        });
+                    }
+
                     previewArea.appendChild(previewItem);
                 });
             }
@@ -347,11 +386,10 @@
                 log('應用初始化中...');
                 showMessage('正在初始化，請稍候...', 'info');
 
-                // 檢查 gapi 是否載入
                 if (!window.gapi) {
                     log('錯誤: Google API 客戶端未載入');
                     showMessage('無法載入 Google API，請檢查網路連線', 'error');
-                    loginBtn.disabled = false; // 允許重試
+                    loginBtn.disabled = false;
                     return;
                 }
 
@@ -376,11 +414,10 @@
                     } catch (error) {
                         log(`初始化失敗: ${error.message}`);
                         showMessage(`初始化 Google API 失敗: ${error.message}`, 'error');
-                        loginBtn.disabled = false; // 允許重試
+                        loginBtn.disabled = false;
                     }
                 });
                 
-                // 設置事件監聽器
                 loginBtn.addEventListener('click', requestAuth);
                 photoBtn.addEventListener('click', () => {
                     log('照片按鈕點擊');
@@ -579,6 +616,8 @@
                     previewArea.innerHTML = '';
                     selectedFiles = [];
                     confirmUploadBtn.style.display = 'none';
+                    videoURLs.forEach(url => URL.revokeObjectURL(url));
+                    videoURLs = [];
                     
                 } catch (error) {
                     log(`上傳過程錯誤: ${error.message}`);
