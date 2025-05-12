@@ -121,6 +121,19 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        .progress-container {
+            width: 100%;
+            background: #f0f0f0;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 20px;
+            background: #4285f4;
+            transition: width 0.3s ease-in-out;
+        }
         .file-info {
             font-size: 12px;
             color: #666;
@@ -338,12 +351,20 @@
                 charCount.classList.toggle('warning', count > 450);
             });
 
-            // 顯示消息
-            function showMessage(message, type = 'info') {
+            // 顯示消息或進度條
+            function showMessage(message, type = 'info', progress = null) {
                 const messageDiv = document.createElement('div');
-                messageDiv.className = `status-message ${type}`;
-                messageDiv.textContent = message;
-                uploadStatus.prepend(messageDiv);
+                if (progress !== null) {
+                    messageDiv.className = 'progress-container';
+                    messageDiv.innerHTML = `
+                        <div class="progress-bar" style="width: ${progress}%"></div>
+                    `;
+                } else {
+                    messageDiv.className = `status-message ${type}`;
+                    messageDiv.textContent = message;
+                }
+                uploadStatus.innerHTML = '';
+                uploadStatus.appendChild(messageDiv);
                 window.scrollTo(0, document.body.scrollHeight);
             }
 
@@ -632,12 +653,18 @@
                     const photos = items.filter(item => item.type === 'photo');
                     const videos = items.filter(item => item.type === 'video');
                     
+                    let completedFiles = 0;
+                    const updateProgress = () => {
+                        completedFiles++;
+                        const progress = (completedFiles / totalFiles) * 100;
+                        showMessage(null, 'info', progress);
+                        log(`進度更新: ${completedFiles}/${totalFiles} (${progress.toFixed(2)}%)`);
+                    };
+                    
                     // 上傳照片
                     if (photos.length > 0) {
                         const nextPhotoNumber = await getNextFileNumber(username, 'photo');
                         log(`開始從編號 ${nextPhotoNumber} 上傳照片`);
-                        
-                        showMessage(`開始上傳 ${photos.length} 個照片...`, 'info');
                         
                         for (let i = 0; i < photos.length; i++) {
                             const item = photos[i];
@@ -647,7 +674,6 @@
                             const fileSize = formatFileSize(file.size);
                             
                             log(`上傳中: ${fileName} (${fileSize}) - (${i+1}/${photos.length})`);
-                            showMessage(`上傳中: ${fileName} (${fileSize}) - (${i+1}/${photos.length})`, 'info');
                             
                             const metadata = {
                                 name: fileName,
@@ -672,14 +698,14 @@
                                 const result = await response.json();
                                 if (response.ok) {
                                     log(`上傳成功: ${fileName} (ID: ${result.id})`);
-                                    showMessage(`${fileName} 上傳成功`, 'success');
+                                    updateProgress();
                                 } else {
                                     log(`上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
-                                    showMessage(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`, 'error');
+                                    throw new Error(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`);
                                 }
                             } catch (uploadError) {
                                 log(`上傳過程中出錯: ${fileName} - ${uploadError.message}`);
-                                showMessage(`${fileName} 上傳錯誤: ${uploadError.message}`, 'error');
+                                throw uploadError;
                             }
                         }
                     }
@@ -689,8 +715,6 @@
                         const nextVideoNumber = await getNextFileNumber(username, 'video');
                         log(`開始從編號 ${nextVideoNumber} 上傳影片`);
                         
-                        showMessage(`開始上傳 ${videos.length} 個影片...`, 'info');
-                        
                         for (let i = 0; i < videos.length; i++) {
                             const item = videos[i];
                             const file = item.file;
@@ -699,7 +723,6 @@
                             const fileSize = formatFileSize(file.size);
                             
                             log(`上傳中: ${fileName} (${fileSize}) - (${i+1}/${videos.length})`);
-                            showMessage(`上傳中: ${fileName} (${fileSize}) - (${i+1}/${videos.length})`, 'info');
                             
                             const metadata = {
                                 name: fileName,
@@ -724,14 +747,14 @@
                                 const result = await response.json();
                                 if (response.ok) {
                                     log(`上傳成功: ${fileName} (ID: ${result.id})`);
-                                    showMessage(`${fileName} 上傳成功`, 'success');
+                                    updateProgress();
                                 } else {
                                     log(`上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
-                                    showMessage(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`, 'error');
+                                    throw new Error(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`);
                                 }
                             } catch (uploadError) {
                                 log(`上傳過程中出錯: ${fileName} - ${uploadError.message}`);
-                                showMessage(`${fileName} 上傳錯誤: ${uploadError.message}`, 'error');
+                                throw uploadError;
                             }
                         }
                     }
@@ -741,7 +764,6 @@
                         const nextMessageNumber = await getNextFileNumber(username, 'message');
                         const fileName = `message_${username}_${nextMessageNumber}.txt`;
                         log(`上傳留言: ${fileName}`);
-                        showMessage(`上傳留言: ${fileName}`, 'info');
                         
                         const metadata = {
                             name: fileName,
@@ -766,19 +788,19 @@
                             const result = await response.json();
                             if (response.ok) {
                                 log(`留言上傳成功: ${fileName} (ID: ${result.id})`);
-                                showMessage(`${fileName} 上傳成功`, 'success');
+                                updateProgress();
                             } else {
                                 log(`留言上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
-                                showMessage(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`, 'error');
+                                throw new Error(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`);
                             }
                         } catch (uploadError) {
                             log(`留言上傳過程中出錯: ${fileName} - ${uploadError.message}`);
-                            showMessage(`${fileName} 上傳錯誤: ${uploadError.message}`, 'error');
+                            throw uploadError;
                         }
                     }
                     
                     log('所有文件上傳完畢');
-                    showMessage(`✓ 全部 ${totalFiles} 個檔案上傳完成！`, 'success');
+                    showMessage(`${photos.length}個照片，${videos.length}個影片上傳完畢，謝謝您的分享！`, 'success');
                     previewArea.innerHTML = '';
                     selectedFiles = [];
                     messageInput.value = '';
