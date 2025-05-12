@@ -64,6 +64,10 @@
         #videoBtn {
             background: #ea4335;
         }
+        #confirmUploadBtn {
+            background: #34a853;
+            display: none;
+        }
         #uploadStatus {
             margin-top: 20px;
         }
@@ -146,7 +150,6 @@
             margin-top: 10px;
             line-height: 1.5;
         }
-        /* 新增：預覽區域樣式 */
         #previewArea {
             display: flex;
             flex-wrap: wrap;
@@ -217,8 +220,9 @@
         <input type="file" id="photoInput" accept="image/*" multiple style="display: none;">
         <input type="file" id="videoInput" accept="video/*" multiple style="display: none;">
         
-        <button id="photoBtn" class="btn upload-btn">上傳照片</button>
-        <button id="videoBtn" class="btn upload-btn">上傳影片</button>
+        <button id="photoBtn" class="btn upload-btn">選擇照片</button>
+        <button id="videoBtn" class="btn upload-btn">選擇影片</button>
+        <button id="confirmUploadBtn" class="btn">確認上傳</button>
         
         <div id="previewArea"></div>
         
@@ -234,7 +238,6 @@
     <script src="https://accounts.google.com/gsi/client"></script>
 
     <script>
-        // 調試函數
         function log(message) {
             const debug = document.getElementById('debug');
             const timestamp = new Date().toLocaleTimeString();
@@ -247,30 +250,37 @@
             debug.style.display = debug.style.display === 'none' ? 'block' : 'none';
         }
 
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 20px auto; 
+            padding: 0;
+            -webkit-text-size-adjust: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            // 設定
             const CLIENT_ID = '1059727961676-mba09jlh8is4qrec86o8osrbd3cgld0l.apps.googleusercontent.com';
             const API_KEY = 'AIzaSyDW8iK2KvaYHHTUw-n5cN6n8AfVMm3Msd8';
             const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
             const SCOPES = 'https://www.googleapis.com/auth/drive.file';
             const FOLDER_ID = '1qnlf5S3Wt1QPJ2WupXcyTnJDm7rUDIrt';
 
-            // 元素
             const loginBtn = document.getElementById('loginBtn');
             const uploadArea = document.getElementById('uploadArea');
             const photoInput = document.getElementById('photoInput');
             const videoInput = document.getElementById('videoInput');
             const photoBtn = document.getElementById('photoBtn');
             const videoBtn = document.getElementById('videoBtn');
+            const confirmUploadBtn = document.getElementById('confirmUploadBtn');
             const uploadStatus = document.getElementById('uploadStatus');
             const previewArea = document.getElementById('previewArea');
 
             let accessToken = null;
             let tokenClient = null;
             let isAuthenticated = false;
-            let selectedFiles = []; // 儲存當前選擇的檔案
+            let selectedFiles = [];
+            let currentFileType = null;
 
-            // 顯示消息
             function showMessage(message, type = 'info') {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `status-message ${type}`;
@@ -279,12 +289,10 @@
                 window.scrollTo(0, document.body.scrollHeight);
             }
 
-            // 清除所有消息
             function clearMessages() {
                 uploadStatus.innerHTML = '';
             }
             
-            // 格式化文件大小
             function formatFileSize(bytes) {
                 if (bytes < 1024) return bytes + ' B';
                 else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
@@ -292,10 +300,18 @@
                 else return (bytes / 1073741824).toFixed(2) + ' GB';
             }
             
-            // 新增：顯示檔案預覽
             function previewFiles(files, type) {
-                previewArea.innerHTML = ''; // 清空舊預覽
-                selectedFiles = Array.from(files); // 更新檔案列表
+                previewArea.innerHTML = '';
+                selectedFiles = Array.from(files);
+                currentFileType = type;
+
+                if (selectedFiles.length === 0) {
+                    previewArea.innerHTML = '<div class="file-info">尚未選擇檔案</div>';
+                    confirmUploadBtn.style.display = 'none';
+                    return;
+                }
+
+                confirmUploadBtn.style.display = 'block';
 
                 selectedFiles.forEach((file, index) => {
                     const reader = new FileReader();
@@ -312,13 +328,12 @@
                         }
                         previewItem.appendChild(media);
 
-                        // 移除按鈕
                         const removeBtn = document.createElement('button');
                         removeBtn.className = 'remove-btn';
                         removeBtn.textContent = '×';
                         removeBtn.onclick = () => {
-                            selectedFiles.splice(index, 1); // 從檔案列表移除
-                            previewFiles(selectedFiles, type); // 重新渲染預覽
+                            selectedFiles.splice(index, 1);
+                            previewFiles(selectedFiles, type);
                             log(`已移除檔案: ${file.name}`);
                         };
                         previewItem.appendChild(removeBtn);
@@ -326,13 +341,8 @@
                     reader.readAsDataURL(file);
                     previewArea.appendChild(previewItem);
                 });
-
-                if (selectedFiles.length === 0) {
-                    previewArea.innerHTML = '<div class="file-info">尚未選擇檔案</div>';
-                }
             }
 
-            // 步驟1: 初始化API並設置事件監聽器
             function initializeApp() {
                 log('應用初始化中...');
                 gapi.load('client', async () => {
@@ -358,7 +368,6 @@
                     }
                 });
                 
-                // 設置事件監聽器
                 loginBtn.addEventListener('click', requestAuth);
                 photoBtn.addEventListener('click', () => {
                     log('照片按鈕點擊');
@@ -370,9 +379,15 @@
                 });
                 photoInput.addEventListener('change', (e) => handleFileSelection(e, 'photo'));
                 videoInput.addEventListener('change', (e) => handleFileSelection(e, 'video'));
+                confirmUploadBtn.addEventListener('click', () => {
+                    if (selectedFiles.length > 0) {
+                        uploadFiles(selectedFiles, currentFileType);
+                    } else {
+                        showMessage('請先選擇檔案！', 'error');
+                    }
+                });
             }
             
-            // 步驟2: 請求授權
             function requestAuth() {
                 log('請求Google授權...');
                 showMessage('正在連接Google帳號...', 'info');
@@ -402,7 +417,6 @@
                 }
             }
             
-            // 步驟3: 處理授權響應
             function handleAuthResponse(response) {
                 log('收到授權響應');
                 
@@ -424,7 +438,6 @@
                 showMessage('Google帳號連接成功！現在可以上傳照片或影片。', 'success');
             }
             
-            // 步驟4: 處理文件選擇
             function handleFileSelection(event, type) {
                 const files = event.target.files;
                 log(`已選擇 ${files.length} 個${type === 'photo' ? '照片' : '影片'}文件`);
@@ -433,6 +446,7 @@
                     showMessage(`未選擇任何${type === 'photo' ? '照片' : '影片'}`, 'error');
                     previewArea.innerHTML = '<div class="file-info">尚未選擇檔案</div>';
                     selectedFiles = [];
+                    confirmUploadBtn.style.display = 'none';
                     return;
                 }
                 
@@ -442,10 +456,8 @@
                     return;
                 }
                 
-                // 顯示預覽
                 previewFiles(files, type);
                 
-                // 檢查文件大小
                 let totalSize = 0;
                 let largeFiles = [];
                 
@@ -463,7 +475,6 @@
                 log(`總文件大小: ${formatFileSize(totalSize)}`);
             }
             
-            // 步驟5: 獲取下一個文件編號
             async function getNextFileNumber(username, type) {
                 try {
                     log(`查詢用戶 "${username}" 的現有 ${type} 文件`);
@@ -485,7 +496,6 @@
                 }
             }
             
-            // 步驟6: 上傳文件
             async function uploadFiles(files, type) {
                 clearMessages();
                 showMessage(`準備上傳 ${files.length} 個${type === 'photo' ? '照片' : '影片'}...`, 'info');
@@ -548,8 +558,9 @@
                     
                     log('所有文件上傳完畢');
                     showMessage(`✓ 全部${type === 'photo' ? '照片' : '影片'}上傳完成！`, 'success');
-                    previewArea.innerHTML = ''; // 清空預覽
-                    selectedFiles = []; // 清空檔案列表
+                    previewArea.innerHTML = '';
+                    selectedFiles = [];
+                    confirmUploadBtn.style.display = 'none';
                     
                 } catch (error) {
                     log(`上傳過程錯誤: ${error.message}`);
@@ -557,23 +568,6 @@
                 }
             }
             
-            // 修改：綁定上傳按鈕事件
-            photoBtn.addEventListener('click', () => {
-                if (selectedFiles.length > 0) {
-                    uploadFiles(selectedFiles, 'photo');
-                } else {
-                    photoInput.click();
-                }
-            });
-            videoBtn.addEventListener('click', () => {
-                if (selectedFiles.length > 0) {
-                    uploadFiles(selectedFiles, 'video');
-                } else {
-                    videoInput.click();
-                }
-            });
-
-            // 初始化應用
             loginBtn.disabled = true;
             showMessage('正在初始化...', 'info');
             initializeApp();
