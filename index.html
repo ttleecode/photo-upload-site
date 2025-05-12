@@ -55,6 +55,9 @@
         #loginBtn {
             background: #34a853;
         }
+        #loginBtn:active {
+            background: #2e7d32;
+        }
         .upload-btn {
             margin-bottom: 10px;
         }
@@ -64,13 +67,15 @@
         #videoBtn {
             background: #ea4335;
         }
+        #videoBtn:active {
+            background: #c5221f;
+        }
         #confirmUploadBtn {
-            background: #34a853;
+            background: #7b1fa2; /* 紫色，獨特 */
             display: none;
         }
-        #messageSubmitBtn {
-            background: #f4b400;
-            display: none;
+        #confirmUploadBtn:active {
+            background: #6a1b9a;
         }
         #uploadStatus {
             margin-top: 20px;
@@ -237,7 +242,7 @@
         <h1>Tim & Lena's Wedding Day！</h1>
         <div class="supplement">
             歡迎大家上傳想要和我們分享的照片或影片👏<br>
-            您也可以單獨留下祝福或留言，與我們分享您的喜悅💌<br>
+            您也可以留下祝福或留言，與我們分享您的喜悅💌<br>
             上傳內容只有新郎、新娘看的到不用擔心😉<br>
             把我們婚禮上歡樂的點滴都留存起來吧💖<br>
             <br>
@@ -271,10 +276,9 @@
         <div class="file-info">支援的影片格式: MP4, MOV, AVI 等 (建議大小小於 1GB)</div>
         
         <div class="message-section">
-            <label for="messageInput">留言或祝福（可選）：</label>
+            <label for="messageInput">留言或祝福（可選，將與檔案一起上傳）：</label>
             <textarea id="messageInput" placeholder="寫下您的祝福或想說的話..." maxlength="500"></textarea>
             <div id="charCount" class="char-count">0/500 字</div>
-            <button id="messageSubmitBtn" class="btn">提交留言</button>
         </div>
     </div>
 
@@ -317,7 +321,6 @@
             const photoBtn = document.getElementById('photoBtn');
             const videoBtn = document.getElementById('videoBtn');
             const confirmUploadBtn = document.getElementById('confirmUploadBtn');
-            const messageSubmitBtn = document.getElementById('messageSubmitBtn');
             const uploadStatus = document.getElementById('uploadStatus');
             const previewArea = document.getElementById('previewArea');
 
@@ -332,7 +335,6 @@
                 const count = messageInput.value.length;
                 charCount.textContent = `${count}/500 字`;
                 charCount.classList.toggle('warning', count > 450);
-                messageSubmitBtn.style.display = count > 0 ? 'block' : 'none';
             });
 
             // 顯示消息
@@ -488,14 +490,6 @@
                         showMessage('請選擇照片或影片！', 'error');
                     }
                 });
-                messageSubmitBtn.addEventListener('click', () => {
-                    const message = messageInput.value.trim();
-                    if (message) {
-                        uploadMessageOnly(message);
-                    } else {
-                        showMessage('請輸入留言！', 'error');
-                    }
-                });
             }
             
             // 步驟2: 請求授權
@@ -613,7 +607,7 @@
                 }
             }
             
-            // 步驟6: 上傳照片和影片
+            // 步驟6: 上傳照片、影片和留言（若有）
             async function uploadFiles(items, message) {
                 clearMessages();
                 const username = document.getElementById('username').value.trim();
@@ -623,7 +617,8 @@
                     return;
                 }
                 
-                showMessage(`準備上傳 ${items.length} 個檔案...`, 'info');
+                const totalFiles = items.length + (message ? 1 : 0);
+                showMessage(`準備上傳 ${totalFiles} 個檔案${message ? '（包含留言）' : ''}...`, 'info');
                 
                 try {
                     if (!isAuthenticated || !accessToken) {
@@ -740,14 +735,54 @@
                         }
                     }
                     
+                    // 上傳留言（若有）
+                    if (message) {
+                        const nextMessageNumber = await getNextFileNumber(username, 'message');
+                        const fileName = `message_${username}_${nextMessageNumber}.txt`;
+                        log(`上傳留言: ${fileName}`);
+                        showMessage(`上傳留言: ${fileName}`, 'info');
+                        
+                        const metadata = {
+                            name: fileName,
+                            parents: [FOLDER_ID],
+                            mimeType: 'text/plain',
+                            description: `上傳者: ${username}, 留言`
+                        };
+                        
+                        const form = new FormData();
+                        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }));
+                        form.append('file', new Blob([message], { type: 'text/plain' }));
+                        
+                        try {
+                            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${accessToken}`
+                                },
+                                body: form
+                            });
+                            
+                            const result = await response.json();
+                            if (response.ok) {
+                                log(`留言上傳成功: ${fileName} (ID: ${result.id})`);
+                                showMessage(`${fileName} 上傳成功`, 'success');
+                            } else {
+                                log(`留言上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
+                                showMessage(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`, 'error');
+                            }
+                        } catch (uploadError) {
+                            log(`留言上傳過程中出錯: ${fileName} - ${uploadError.message}`);
+                            showMessage(`${fileName} 上傳錯誤: ${uploadError.message}`, 'error');
+                        }
+                    }
+                    
                     log('所有文件上傳完畢');
-                    showMessage(`✓ 全部 ${items.length} 個檔案上傳完成！`, 'success');
+                    showMessage(`✓ 全部 ${totalFiles} 個檔案上傳完成！`, 'success');
                     previewArea.innerHTML = '';
                     selectedFiles = [];
                     messageInput.value = '';
                     charCount.textContent = '0/500 字';
                     confirmUploadBtn.style.display = 'none';
-                    messageSubmitBtn.style.display = 'none';
                     mediaURLs.forEach(url => URL.revokeObjectURL(url));
                     mediaURLs = [];
                     photoInput.value = '';
@@ -757,76 +792,6 @@
                 } catch (error) {
                     log(`上傳過程錯誤: ${error.message}`);
                     showMessage(`上傳錯誤: ${error.message}`, 'error');
-                }
-            }
-            
-            // 步驟7: 單獨上傳留言
-            async function uploadMessageOnly(message) {
-                clearMessages();
-                const username = document.getElementById('username').value.trim();
-                
-                if (!username) {
-                    showMessage('請輸入姓名！', 'error');
-                    return;
-                }
-                
-                showMessage('準備上傳留言...', 'info');
-                
-                try {
-                    if (!isAuthenticated || !accessToken) {
-                        throw new Error('未登入 Google 帳號，請先點擊 "登入 Google 帳號" 按鈕');
-                    }
-                    
-                    gapi.client.setToken({ access_token: accessToken });
-                    
-                    const nextNumber = await getNextFileNumber(username, 'message');
-                    const fileName = `message_${username}_${nextNumber}.txt`;
-                    log(`上傳留言: ${fileName}`);
-                    showMessage(`上傳留言: ${fileName}`, 'info');
-                    
-                    const metadata = {
-                        name: fileName,
-                        parents: [FOLDER_ID],
-                        mimeType: 'text/plain',
-                        description: `上傳者: ${username}, 留言`
-                    };
-                    
-                    const form = new FormData();
-                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }));
-                    form.append('file', new Blob([message], { type: 'text/plain' }));
-                    
-                    try {
-                        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${accessToken}`
-                            },
-                            body: form
-                        });
-                        
-                        const result = await response.json();
-                        if (response.ok) {
-                            log(`留言上傳成功: ${fileName} (ID: ${result.id})`);
-                            showMessage(`${fileName} 上傳成功`, 'success');
-                        } else {
-                            log(`留言上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
-                            showMessage(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`, 'error');
-                        }
-                    } catch (uploadError) {
-                        log(`留言上傳過程中出錯: ${fileName} - ${uploadError.message}`);
-                        showMessage(`${fileName} 上傳錯誤: ${uploadError.message}`, 'error');
-                    }
-                    
-                    log('留言上傳完畢');
-                    showMessage('✓ 留言上傳完成！', 'success');
-                    messageInput.value = '';
-                    charCount.textContent = '0/500 字';
-                    messageSubmitBtn.style.display = 'none';
-                    log('留言上傳完成，已重置留言輸入框');
-                    
-                } catch (error) {
-                    log(`留言上傳過程錯誤: ${error.message}`);
-                    showMessage(`留言上傳錯誤: ${error.message}`, 'error');
                 }
             }
             
