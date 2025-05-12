@@ -189,6 +189,17 @@
         .remove-btn:hover {
             background: #c5221f;
         }
+        .preview-fallback {
+            width: 100%;
+            height: 100%;
+            background: #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 12px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -275,7 +286,7 @@
             let isAuthenticated = false;
             let selectedFiles = [];
             let currentFileType = null;
-            let videoURLs = []; // 儲存臨時 URL 以便清理
+            let mediaURLs = []; // 儲存臨時 URL 以便清理
 
             // 顯示消息
             function showMessage(message, type = 'info') {
@@ -299,25 +310,11 @@
                 else return (bytes / 1073741824).toFixed(2) + ' GB';
             }
             
-            // 生成影片第一幀縮圖
-            function generateVideoThumbnail(video, callback) {
-                video.currentTime = 0; // 設置到第一幀
-                video.addEventListener('loadeddata', () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    const thumbnail = canvas.toDataURL('image/jpeg');
-                    callback(thumbnail);
-                }, { once: true });
-            }
-
             // 顯示檔案預覽
             function previewFiles(files, type) {
                 // 清理舊的臨時 URL
-                videoURLs.forEach(url => URL.revokeObjectURL(url));
-                videoURLs = [];
+                mediaURLs.forEach(url => URL.revokeObjectURL(url));
+                mediaURLs = [];
                 
                 previewArea.innerHTML = '';
                 selectedFiles = Array.from(files);
@@ -334,48 +331,41 @@
                 selectedFiles.forEach((file, index) => {
                     const previewItem = document.createElement('div');
                     previewItem.className = 'preview-item';
+                    const mediaURL = URL.createObjectURL(file);
+                    mediaURLs.push(mediaURL);
 
                     if (type === 'photo') {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            const img = document.createElement('img');
-                            img.src = e.target.result;
-                            previewItem.appendChild(img);
-
-                            const removeBtn = document.createElement('button');
-                            removeBtn.className = 'remove-btn';
-                            removeBtn.textContent = '×';
-                            removeBtn.onclick = () => {
-                                selectedFiles.splice(index, 1);
-                                previewFiles(selectedFiles, type);
-                                log(`已移除檔案: ${file.name}`);
-                            };
-                            previewItem.appendChild(removeBtn);
+                        const img = document.createElement('img');
+                        img.src = mediaURL;
+                        img.onerror = () => {
+                            img.src = ''; // 後備：清除錯誤圖片
+                            previewItem.innerHTML = '<div class="preview-fallback">圖片無法預覽</div>';
                         };
-                        reader.readAsDataURL(file);
+                        previewItem.appendChild(img);
                     } else {
-                        const videoURL = URL.createObjectURL(file);
-                        videoURLs.push(videoURL);
                         const video = document.createElement('video');
-                        video.src = videoURL;
+                        video.src = mediaURL;
                         video.muted = true;
                         video.preload = 'metadata';
-
-                        generateVideoThumbnail(video, (thumbnail) => {
-                            video.poster = thumbnail;
-                            previewItem.appendChild(video);
-
-                            const removeBtn = document.createElement('button');
-                            removeBtn.className = 'remove-btn';
-                            removeBtn.textContent = '×';
-                            removeBtn.onclick = () => {
-                                selectedFiles.splice(index, 1);
-                                previewFiles(selectedFiles, type);
-                                log(`已移除檔案: ${file.name}`);
-                            };
-                            previewItem.appendChild(removeBtn);
-                        });
+                        video.currentTime = 0; // 顯示第一幀
+                        video.onerror = () => {
+                            previewItem.innerHTML = '<div class="preview-fallback">影片無法預覽</div>';
+                        };
+                        video.addEventListener('loadedmetadata', () => {
+                            video.currentTime = 0; // 確保第一幀
+                        }, { once: true });
+                        previewItem.appendChild(video);
                     }
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-btn';
+                    removeBtn.textContent = '×';
+                    removeBtn.onclick = () => {
+                        selectedFiles.splice(index, 1);
+                        previewFiles(selectedFiles, type);
+                        log(`已移除檔案: ${file.name}`);
+                    };
+                    previewItem.appendChild(removeBtn);
 
                     previewArea.appendChild(previewItem);
                 });
@@ -616,8 +606,8 @@
                     previewArea.innerHTML = '';
                     selectedFiles = [];
                     confirmUploadBtn.style.display = 'none';
-                    videoURLs.forEach(url => URL.revokeObjectURL(url));
-                    videoURLs = [];
+                    mediaURLs.forEach(url => URL.revokeObjectURL(url));
+                    mediaURLs = [];
                     
                 } catch (error) {
                     log(`上傳過程錯誤: ${error.message}`);
