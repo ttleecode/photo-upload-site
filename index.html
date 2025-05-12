@@ -316,6 +316,15 @@
                 mediaURLs.forEach(url => URL.revokeObjectURL(url));
                 mediaURLs = [];
                 
+                // 重置對應的 <input> 值，確保可再次選取相同檔案
+                if (type === 'photo') {
+                    photoInput.value = '';
+                    log('已重置照片輸入框');
+                } else {
+                    videoInput.value = '';
+                    log('已重置影片輸入框');
+                }
+                
                 previewArea.innerHTML = '';
                 selectedFiles = Array.from(files);
                 currentFileType = type;
@@ -608,6 +617,10 @@
                     confirmUploadBtn.style.display = 'none';
                     mediaURLs.forEach(url => URL.revokeObjectURL(url));
                     mediaURLs = [];
+                    // 重置輸入框
+                    photoInput.value = '';
+                    videoInput.value = '';
+                    log('上傳完成，已重置照片和影片輸入框');
                     
                 } catch (error) {
                     log(`上傳過程錯誤: ${error.message}`);
