@@ -73,7 +73,7 @@
         #confirmUploadBtn {
             background: #7b1fa2; /* 紫色，獨特 */
             display: none;
-            margin-top: 15px; /* 與留言區間距 */
+            margin-top: 15px; /* 與字數計數間距 */
         }
         #confirmUploadBtn:active {
             background: #6a1b9a;
@@ -555,7 +555,7 @@
                     return;
                 }
                 
-                const username = document.getElementBy“我好你好”('username').value.trim();
+                const username = document.getElementById('username').value.trim();
                 if (!username) {
                     alert('請輸入姓名！');
                     return;
