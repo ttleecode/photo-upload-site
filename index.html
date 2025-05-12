@@ -68,6 +68,10 @@
             background: #34a853;
             display: none;
         }
+        #messageSubmitBtn {
+            background: #f4b400;
+            display: none;
+        }
         #uploadStatus {
             margin-top: 20px;
         }
@@ -200,6 +204,13 @@
             font-size: 12px;
             text-align: center;
         }
+        .message-section {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
         #messageInput {
             width: 100%;
             padding: 10px;
@@ -226,7 +237,7 @@
         <h1>Tim & Lena's Wedding Day！</h1>
         <div class="supplement">
             歡迎大家上傳想要和我們分享的照片或影片👏<br>
-            您也可以留下祝福或留言，與我們分享您的喜悅💌<br>
+            您也可以單獨留下祝福或留言，與我們分享您的喜悅💌<br>
             上傳內容只有新郎、新娘看的到不用擔心😉<br>
             把我們婚禮上歡樂的點滴都留存起來吧💖<br>
             <br>
@@ -252,17 +263,19 @@
         
         <button id="photoBtn" class="btn upload-btn">選擇照片</button>
         <button id="videoBtn" class="btn upload-btn">選擇影片</button>
-        
-        <label for="messageInput">留言或祝福（可選）：</label>
-        <textarea id="messageInput" placeholder="寫下您的祝福或想說的話..." maxlength="500"></textarea>
-        <div id="charCount" class="char-count">0/500 字</div>
-        
         <button id="confirmUploadBtn" class="btn">確認上傳</button>
         
         <div id="previewArea"></div>
         
         <div class="file-info">支援的照片格式: JPG, PNG, GIF 等</div>
         <div class="file-info">支援的影片格式: MP4, MOV, AVI 等 (建議大小小於 1GB)</div>
+        
+        <div class="message-section">
+            <label for="messageInput">留言或祝福（可選）：</label>
+            <textarea id="messageInput" placeholder="寫下您的祝福或想說的話..." maxlength="500"></textarea>
+            <div id="charCount" class="char-count">0/500 字</div>
+            <button id="messageSubmitBtn" class="btn">提交留言</button>
+        </div>
     </div>
 
     <div id="uploadStatus"></div>
@@ -304,14 +317,14 @@
             const photoBtn = document.getElementById('photoBtn');
             const videoBtn = document.getElementById('videoBtn');
             const confirmUploadBtn = document.getElementById('confirmUploadBtn');
+            const messageSubmitBtn = document.getElementById('messageSubmitBtn');
             const uploadStatus = document.getElementById('uploadStatus');
             const previewArea = document.getElementById('previewArea');
 
             let accessToken = null;
             let tokenClient = null;
             let isAuthenticated = false;
-            let selectedFiles = [];
-            let currentFileType = null;
+            let selectedFiles = []; // 儲存 { file: File, type: 'photo'|'video' }
             let mediaURLs = []; // 儲存臨時 URL 以便清理
 
             // 字數計數
@@ -319,6 +332,7 @@
                 const count = messageInput.value.length;
                 charCount.textContent = `${count}/500 字`;
                 charCount.classList.toggle('warning', count > 450);
+                messageSubmitBtn.style.display = count > 0 ? 'block' : 'none';
             });
 
             // 顯示消息
@@ -344,44 +358,35 @@
             }
             
             // 顯示檔案預覽
-            function previewFiles(files, type) {
+            function previewFiles() {
                 // 清理舊的臨時 URL
                 mediaURLs.forEach(url => URL.revokeObjectURL(url));
                 mediaURLs = [];
                 
                 previewArea.innerHTML = '';
-                selectedFiles = Array.from(files);
-                currentFileType = type;
-
+                
                 if (selectedFiles.length === 0) {
                     previewArea.innerHTML = '<div class="file-info">尚未選擇檔案</div>';
-                    confirmUploadBtn.style.display = messageInput.value.trim() ? 'block' : 'none';
-                    // 重置輸入框
-                    if (type === 'photo') {
-                        photoInput.value = '';
-                        log('已重置照片輸入框');
-                    } else if (type === 'video') {
-                        videoInput.value = '';
-                        log('已重置影片輸入框');
-                    }
+                    confirmUploadBtn.style.display = 'none';
                     return;
                 }
 
                 confirmUploadBtn.style.display = 'block';
+                previewArea.innerHTML = `<div class="file-info">已選擇 ${selectedFiles.length} 個檔案</div>`;
 
-                selectedFiles.forEach((file, index) => {
+                selectedFiles.forEach((item, index) => {
                     const previewItem = document.createElement('div');
                     previewItem.className = 'preview-item';
-                    const mediaURL = URL.createObjectURL(file);
+                    const mediaURL = URL.createObjectURL(item.file);
                     mediaURLs.push(mediaURL);
-                    log(`生成預覽 URL: ${file.name}`);
+                    log(`生成預覽 URL: ${item.file.name} (${item.type})`);
 
-                    if (type === 'photo') {
+                    if (item.type === 'photo') {
                         const img = document.createElement('img');
                         img.src = mediaURL;
-                        img.onload = () => log(`照片預覽載入成功: ${file.name}`);
+                        img.onload = () => log(`照片預覽載入成功: ${item.file.name}`);
                         img.onerror = () => {
-                            log(`照片預覽載入失敗: ${file.name}`);
+                            log(`照片預覽載入失敗: ${item.file.name}`);
                             previewItem.innerHTML = '<div class="preview-fallback">圖片無法預覽</div>';
                         };
                         previewItem.appendChild(img);
@@ -391,14 +396,14 @@
                         video.muted = true;
                         video.preload = 'metadata';
                         video.currentTime = 0;
-                        video.onloadstart = () => log(`影片預覽開始載入: ${file.name}`);
+                        video.onloadstart = () => log(`影片預覽開始載入: ${item.file.name}`);
                         video.onerror = () => {
-                            log(`影片預覽載入失敗: ${file.name}`);
+                            log(`影片預覽載入失敗: ${item.file.name}`);
                             previewItem.innerHTML = '<div class="preview-fallback">影片無法預覽</div>';
                         };
                         video.addEventListener('loadedmetadata', () => {
                             video.currentTime = 0;
-                            log(`影片元數據載入，顯示第一幀: ${file.name}`);
+                            log(`影片元數據載入，顯示第一幀: ${item.file.name}`);
                         }, { once: true });
                         previewItem.appendChild(video);
                     }
@@ -408,8 +413,8 @@
                     removeBtn.textContent = '×';
                     removeBtn.onclick = () => {
                         selectedFiles.splice(index, 1);
-                        previewFiles(selectedFiles, type);
-                        log(`已移除檔案: ${file.name}`);
+                        previewFiles();
+                        log(`已移除檔案: ${item.file.name}`);
                     };
                     previewItem.appendChild(removeBtn);
 
@@ -417,13 +422,9 @@
                 });
 
                 // 重置輸入框，確保可重選相同檔案
-                if (type === 'photo') {
-                    photoInput.value = '';
-                    log('已重置照片輸入框');
-                } else if (type === 'video') {
-                    videoInput.value = '';
-                    log('已重置影片輸入框');
-                }
+                photoInput.value = '';
+                videoInput.value = '';
+                log('已重置照片和影片輸入框');
             }
 
             // 步驟1: 初始化API並設置事件監聽器
@@ -481,11 +482,18 @@
                     handleFileSelection(e, 'video');
                 });
                 confirmUploadBtn.addEventListener('click', () => {
-                    const message = messageInput.value.trim();
-                    if (selectedFiles.length > 0 || message) {
-                        uploadFiles(selectedFiles, currentFileType, message);
+                    if (selectedFiles.length > 0) {
+                        uploadFiles(selectedFiles, messageInput.value.trim());
                     } else {
-                        showMessage('請選擇檔案或輸入留言！', 'error');
+                        showMessage('請選擇照片或影片！', 'error');
+                    }
+                });
+                messageSubmitBtn.addEventListener('click', () => {
+                    const message = messageInput.value.trim();
+                    if (message) {
+                        uploadMessageOnly(message);
+                    } else {
+                        showMessage('請輸入留言！', 'error');
                     }
                 });
             }
@@ -549,9 +557,6 @@
                 
                 if (!files || files.length === 0) {
                     showMessage(`未選擇任何${type === 'photo' ? '照片' : '影片'}`, 'info');
-                    previewArea.innerHTML = '<div class="file-info">尚未選擇檔案</div>';
-                    selectedFiles = [];
-                    confirmUploadBtn.style.display = messageInput.value.trim() ? 'block' : 'none';
                     return;
                 }
                 
@@ -561,15 +566,20 @@
                     return;
                 }
                 
-                previewFiles(files, type);
+                // 追加新檔案到 selectedFiles
+                Array.from(files).forEach(file => {
+                    selectedFiles.push({ file, type });
+                });
+                
+                previewFiles();
                 
                 let totalSize = 0;
                 let largeFiles = [];
                 
-                for (let i = 0; i < files.length; i++) {
-                    totalSize += files[i].size;
-                    if (files[i].size > 1073741824) {
-                        largeFiles.push(`${files[i].name} (${formatFileSize(files[i].size)})`);
+                for (let item of selectedFiles) {
+                    totalSize += item.file.size;
+                    if (item.file.size > 1073741824) {
+                        largeFiles.push(`${item.file.name} (${formatFileSize(item.file.size)})`);
                     }
                 }
                 
@@ -603,8 +613,8 @@
                 }
             }
             
-            // 步驟6: 上傳文件
-            async function uploadFiles(files, type, message) {
+            // 步驟6: 上傳照片和影片
+            async function uploadFiles(items, message) {
                 clearMessages();
                 const username = document.getElementById('username').value.trim();
                 
@@ -613,12 +623,7 @@
                     return;
                 }
                 
-                if (files.length === 0 && !message) {
-                    showMessage('請選擇檔案或輸入留言！', 'error');
-                    return;
-                }
-                
-                showMessage(`準備上傳 ${files.length} 個${type === 'photo' ? '照片' : type === 'video' ? '影片' : '檔案'}和留言...`, 'info');
+                showMessage(`準備上傳 ${items.length} 個檔案...`, 'info');
                 
                 try {
                     if (!isAuthenticated || !accessToken) {
@@ -627,23 +632,26 @@
                     
                     gapi.client.setToken({ access_token: accessToken });
                     
-                    // 上傳照片或影片
-                    if (files.length > 0) {
-                        const nextNumber = await getNextFileNumber(username, type);
-                        log(`開始從編號 ${nextNumber} 上傳 ${type}`);
+                    // 分離照片和影片
+                    const photos = items.filter(item => item.type === 'photo');
+                    const videos = items.filter(item => item.type === 'video');
+                    
+                    // 上傳照片
+                    if (photos.length > 0) {
+                        const nextPhotoNumber = await getNextFileNumber(username, 'photo');
+                        log(`開始從編號 ${nextPhotoNumber} 上傳照片`);
                         
-                        showMessage(`開始上傳 ${files.length} 個${type === 'photo' ? '照片' : '影片'}...`, 'info');
+                        showMessage(`開始上傳 ${photos.length} 個照片...`, 'info');
                         
-                        const prefix = type === 'photo' ? 'photo_' : 'video_';
-                        
-                        for (let i = 0; i < files.length; i++) {
-                            const file = files[i];
-                            const fileNumber = nextNumber + i;
-                            const fileName = `${prefix}${username}_${fileNumber}`;
+                        for (let i = 0; i < photos.length; i++) {
+                            const item = photos[i];
+                            const file = item.file;
+                            const fileNumber = nextPhotoNumber + i;
+                            const fileName = `photo_${username}_${fileNumber}`;
                             const fileSize = formatFileSize(file.size);
                             
-                            log(`上傳中: ${fileName} (${fileSize}) - (${i+1}/${files.length})`);
-                            showMessage(`上傳中: ${fileName} (${fileSize}) - (${i+1}/${files.length})`, 'info');
+                            log(`上傳中: ${fileName} (${fileSize}) - (${i+1}/${photos.length})`);
+                            showMessage(`上傳中: ${fileName} (${fileSize}) - (${i+1}/${photos.length})`, 'info');
                             
                             const metadata = {
                                 name: fileName,
@@ -680,54 +688,66 @@
                         }
                     }
                     
-                    // 上傳獨立留言檔案（若有留言）
-                    if (message) {
-                        const nextNumber = await getNextFileNumber(username, 'message');
-                        const fileName = `message_${username}_${nextNumber}.txt`;
-                        log(`上傳留言: ${fileName}`);
-                        showMessage(`上傳留言: ${fileName}`, 'info');
+                    // 上傳影片
+                    if (videos.length > 0) {
+                        const nextVideoNumber = await getNextFileNumber(username, 'video');
+                        log(`開始從編號 ${nextVideoNumber} 上傳影片`);
                         
-                        const metadata = {
-                            name: fileName,
-                            parents: [FOLDER_ID],
-                            mimeType: 'text/plain',
-                            description: `上傳者: ${username}, 留言`
-                        };
+                        showMessage(`開始上傳 ${videos.length} 個影片...`, 'info');
                         
-                        const form = new FormData();
-                        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }));
-                        form.append('file', new Blob([message], { type: 'text/plain' }));
-                        
-                        try {
-                            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                                method: 'POST',
-                                headers: {
-                                    'Authorization': `Bearer ${accessToken}`
-                                },
-                                body: form
-                            });
+                        for (let i = 0; i < videos.length; i++) {
+                            const item = videos[i];
+                            const file = item.file;
+                            const fileNumber = nextVideoNumber + i;
+                            const fileName = `video_${username}_${fileNumber}`;
+                            const fileSize = formatFileSize(file.size);
                             
-                            const result = await response.json();
-                            if (response.ok) {
-                                log(`留言上傳成功: ${fileName} (ID: ${result.id})`);
-                                showMessage(`${fileName} 上傳成功`, 'success');
-                            } else {
-                                log(`留言上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
-                                showMessage(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`, 'error');
+                            log(`上傳中: ${fileName} (${fileSize}) - (${i+1}/${videos.length})`);
+                            showMessage(`上傳中: ${fileName} (${fileSize}) - (${i+1}/${videos.length})`, 'info');
+                            
+                            const metadata = {
+                                name: fileName,
+                                parents: [FOLDER_ID],
+                                mimeType: file.type,
+                                description: `上傳者: ${username}, 原始文件名: ${file.name}${message ? `, 留言: ${message}` : ''}`
+                            };
+                            
+                            const form = new FormData();
+                            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }));
+                            form.append('file', file);
+                            
+                            try {
+                                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': `Bearer ${accessToken}`
+                                    },
+                                    body: form
+                                });
+                                
+                                const result = await response.json();
+                                if (response.ok) {
+                                    log(`上傳成功: ${fileName} (ID: ${result.id})`);
+                                    showMessage(`${fileName} 上傳成功`, 'success');
+                                } else {
+                                    log(`上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
+                                    showMessage(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`, 'error');
+                                }
+                            } catch (uploadError) {
+                                log(`上傳過程中出錯: ${fileName} - ${uploadError.message}`);
+                                showMessage(`${fileName} 上傳錯誤: ${uploadError.message}`, 'error');
                             }
-                        } catch (uploadError) {
-                            log(`留言上傳過程中出錯: ${fileName} - ${uploadError.message}`);
-                            showMessage(`${fileName} 上傳錯誤: ${uploadError.message}`, 'error');
                         }
                     }
                     
-                    log('所有文件和留言上傳完畢');
-                    showMessage(`✓ 全部${type === 'photo' ? '照片' : type === 'video' ? '影片' : ''}${files.length > 0 && message ? '和留言' : message ? '留言' : ''}上傳完成！`, 'success');
+                    log('所有文件上傳完畢');
+                    showMessage(`✓ 全部 ${items.length} 個檔案上傳完成！`, 'success');
                     previewArea.innerHTML = '';
                     selectedFiles = [];
                     messageInput.value = '';
                     charCount.textContent = '0/500 字';
                     confirmUploadBtn.style.display = 'none';
+                    messageSubmitBtn.style.display = 'none';
                     mediaURLs.forEach(url => URL.revokeObjectURL(url));
                     mediaURLs = [];
                     photoInput.value = '';
@@ -737,6 +757,76 @@
                 } catch (error) {
                     log(`上傳過程錯誤: ${error.message}`);
                     showMessage(`上傳錯誤: ${error.message}`, 'error');
+                }
+            }
+            
+            // 步驟7: 單獨上傳留言
+            async function uploadMessageOnly(message) {
+                clearMessages();
+                const username = document.getElementById('username').value.trim();
+                
+                if (!username) {
+                    showMessage('請輸入姓名！', 'error');
+                    return;
+                }
+                
+                showMessage('準備上傳留言...', 'info');
+                
+                try {
+                    if (!isAuthenticated || !accessToken) {
+                        throw new Error('未登入 Google 帳號，請先點擊 "登入 Google 帳號" 按鈕');
+                    }
+                    
+                    gapi.client.setToken({ access_token: accessToken });
+                    
+                    const nextNumber = await getNextFileNumber(username, 'message');
+                    const fileName = `message_${username}_${nextNumber}.txt`;
+                    log(`上傳留言: ${fileName}`);
+                    showMessage(`上傳留言: ${fileName}`, 'info');
+                    
+                    const metadata = {
+                        name: fileName,
+                        parents: [FOLDER_ID],
+                        mimeType: 'text/plain',
+                        description: `上傳者: ${username}, 留言`
+                    };
+                    
+                    const form = new FormData();
+                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }));
+                    form.append('file', new Blob([message], { type: 'text/plain' }));
+                    
+                    try {
+                        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${accessToken}`
+                            },
+                            body: form
+                        });
+                        
+                        const result = await response.json();
+                        if (response.ok) {
+                            log(`留言上傳成功: ${fileName} (ID: ${result.id})`);
+                            showMessage(`${fileName} 上傳成功`, 'success');
+                        } else {
+                            log(`留言上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
+                            showMessage(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`, 'error');
+                        }
+                    } catch (uploadError) {
+                        log(`留言上傳過程中出錯: ${fileName} - ${uploadError.message}`);
+                        showMessage(`${fileName} 上傳錯誤: ${uploadError.message}`, 'error');
+                    }
+                    
+                    log('留言上傳完畢');
+                    showMessage('✓ 留言上傳完成！', 'success');
+                    messageInput.value = '';
+                    charCount.textContent = '0/500 字';
+                    messageSubmitBtn.style.display = 'none';
+                    log('留言上傳完成，已重置留言輸入框');
+                    
+                } catch (error) {
+                    log(`留言上傳過程錯誤: ${error.message}`);
+                    showMessage(`留言上傳錯誤: ${error.message}`, 'error');
                 }
             }
             
