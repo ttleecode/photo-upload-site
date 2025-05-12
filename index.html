@@ -238,6 +238,7 @@
     <script src="https://accounts.google.com/gsi/client"></script>
 
     <script>
+        // 調試函數
         function log(message) {
             const debug = document.getElementById('debug');
             const timestamp = new Date().toLocaleTimeString();
@@ -250,21 +251,15 @@
             debug.style.display = debug.style.display === 'none' ? 'block' : 'none';
         }
 
-        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 20px auto; 
-            padding: 0;
-            -webkit-text-size-adjust: 100%;
-            max-width: 600px;
-            text-align: center;
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
+            // 設定
             const CLIENT_ID = '1059727961676-mba09jlh8is4qrec86o8osrbd3cgld0l.apps.googleusercontent.com';
             const API_KEY = 'AIzaSyDW8iK2KvaYHHTUw-n5cN6n8AfVMm3Msd8';
             const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
             const SCOPES = 'https://www.googleapis.com/auth/drive.file';
             const FOLDER_ID = '1qnlf5S3Wt1QPJ2WupXcyTnJDm7rUDIrt';
 
+            // 元素
             const loginBtn = document.getElementById('loginBtn');
             const uploadArea = document.getElementById('uploadArea');
             const photoInput = document.getElementById('photoInput');
@@ -281,6 +276,7 @@
             let selectedFiles = [];
             let currentFileType = null;
 
+            // 顯示消息
             function showMessage(message, type = 'info') {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `status-message ${type}`;
@@ -289,10 +285,12 @@
                 window.scrollTo(0, document.body.scrollHeight);
             }
 
+            // 清除所有消息
             function clearMessages() {
                 uploadStatus.innerHTML = '';
             }
             
+            // 格式化文件大小
             function formatFileSize(bytes) {
                 if (bytes < 1024) return bytes + ' B';
                 else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
@@ -300,6 +298,7 @@
                 else return (bytes / 1073741824).toFixed(2) + ' GB';
             }
             
+            // 顯示檔案預覽
             function previewFiles(files, type) {
                 previewArea.innerHTML = '';
                 selectedFiles = Array.from(files);
@@ -343,8 +342,19 @@
                 });
             }
 
+            // 步驟1: 初始化API並設置事件監聽器
             function initializeApp() {
                 log('應用初始化中...');
+                showMessage('正在初始化，請稍候...', 'info');
+
+                // 檢查 gapi 是否載入
+                if (!window.gapi) {
+                    log('錯誤: Google API 客戶端未載入');
+                    showMessage('無法載入 Google API，請檢查網路連線', 'error');
+                    loginBtn.disabled = false; // 允許重試
+                    return;
+                }
+
                 gapi.load('client', async () => {
                     try {
                         await gapi.client.init({
@@ -361,13 +371,16 @@
                         
                         log('身份驗證客戶端初始化成功');
                         loginBtn.disabled = false;
+                        showMessage('初始化完成，請登入 Google 帳號', 'info');
                         
                     } catch (error) {
                         log(`初始化失敗: ${error.message}`);
-                        showMessage(`初始化Google API失敗: ${error.message}`, 'error');
+                        showMessage(`初始化 Google API 失敗: ${error.message}`, 'error');
+                        loginBtn.disabled = false; // 允許重試
                     }
                 });
                 
+                // 設置事件監聽器
                 loginBtn.addEventListener('click', requestAuth);
                 photoBtn.addEventListener('click', () => {
                     log('照片按鈕點擊');
@@ -388,14 +401,15 @@
                 });
             }
             
+            // 步驟2: 請求授權
             function requestAuth() {
-                log('請求Google授權...');
-                showMessage('正在連接Google帳號...', 'info');
+                log('請求 Google 授權...');
+                showMessage('正在連接 Google 帳號...', 'info');
                 loginBtn.disabled = true;
                 
                 if (!tokenClient) {
                     log('錯誤: 身份驗證客戶端未初始化');
-                    showMessage('無法連接Google身份驗證服務', 'error');
+                    showMessage('無法連接 Google 身份驗證服務，請稍後重試', 'error');
                     loginBtn.disabled = false;
                     return;
                 }
@@ -412,17 +426,18 @@
                     log('授權請求已發送');
                 } catch (error) {
                     log(`授權請求失敗: ${error.message}`);
-                    showMessage(`無法請求Google授權: ${error.message}`, 'error');
+                    showMessage(`無法請求 Google 授權: ${error.message}`, 'error');
                     loginBtn.disabled = false;
                 }
             }
             
+            // 步驟3: 處理授權響應
             function handleAuthResponse(response) {
                 log('收到授權響應');
                 
                 if (response.error !== undefined) {
                     log(`授權錯誤: ${response.error}`);
-                    showMessage(`Google授權失敗: ${response.error}`, 'error');
+                    showMessage(`Google 授權失敗: ${response.error}`, 'error');
                     loginBtn.disabled = false;
                     return;
                 }
@@ -431,13 +446,14 @@
                 isAuthenticated = true;
                 log(`授權成功，獲取令牌: ${accessToken.substring(0, 5)}...`);
                 
-                loginBtn.textContent = '✓ Google帳號已連接';
+                loginBtn.textContent = '✓ Google 帳號已連接';
                 loginBtn.style.background = '#34a853';
                 uploadArea.style.display = 'block';
                 
-                showMessage('Google帳號連接成功！現在可以上傳照片或影片。', 'success');
+                showMessage('Google 帳號連接成功！現在可以上傳照片或影片。', 'success');
             }
             
+            // 步驟4: 處理文件選擇
             function handleFileSelection(event, type) {
                 const files = event.target.files;
                 log(`已選擇 ${files.length} 個${type === 'photo' ? '照片' : '影片'}文件`);
@@ -475,6 +491,7 @@
                 log(`總文件大小: ${formatFileSize(totalSize)}`);
             }
             
+            // 步驟5: 獲取下一個文件編號
             async function getNextFileNumber(username, type) {
                 try {
                     log(`查詢用戶 "${username}" 的現有 ${type} 文件`);
@@ -496,6 +513,7 @@
                 }
             }
             
+            // 步驟6: 上傳文件
             async function uploadFiles(files, type) {
                 clearMessages();
                 showMessage(`準備上傳 ${files.length} 個${type === 'photo' ? '照片' : '影片'}...`, 'info');
@@ -504,7 +522,7 @@
                 
                 try {
                     if (!isAuthenticated || !accessToken) {
-                        throw new Error('未登入Google帳號，請先點擊"登入Google帳號"按鈕');
+                        throw new Error('未登入 Google 帳號，請先點擊 "登入 Google 帳號" 按鈕');
                     }
                     
                     gapi.client.setToken({ access_token: accessToken });
@@ -568,6 +586,7 @@
                 }
             }
             
+            // 初始化應用
             loginBtn.disabled = true;
             showMessage('正在初始化...', 'info');
             initializeApp();
