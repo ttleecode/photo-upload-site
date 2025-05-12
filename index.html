@@ -274,6 +274,10 @@
 
     <div class="section" id="authArea">
         <button id="loginBtn" class="btn">1. 登入 Google 帳號</button>
+        <div class="supplement warning">
+            若看到「未驗證」警告，請點擊「進階」並「繼續」以完成登入。<br>
+            若跳轉到 Gmail 寫信頁面，請清除瀏覽器快取與 Cookie，或使用無痕模式（Chrome: Ctrl+Shift+N）。
+        </div>
     </div>
 
     <div class="section" id="uploadArea" style="display: none;">
@@ -527,26 +531,22 @@
                     return;
                 }
                 
+                // 強制登出現有令牌
                 if (gapi.client.getToken() !== null) {
                     google.accounts.oauth2.revoke(gapi.client.getToken().access_token, () => {
                         gapi.client.setToken(null);
                         log('已撤銷先前的令牌');
+                        tokenClient.requestAccessToken();
                     });
-                }
-                
-                try {
+                } else {
                     tokenClient.requestAccessToken();
-                    log('授權請求已發送');
-                } catch (error) {
-                    log(`授權請求失敗: ${error.message}`);
-                    showMessage(`無法請求 Google 授權: ${error.message}`, 'error');
-                    loginBtn.disabled = false;
                 }
+                log('授權請求已發送');
             }
             
             // 步驟3: 處理授權響應
             function handleAuthResponse(response) {
-                log('收到授權響應');
+                log('收到授權響應: ' + JSON.stringify(response));
                 
                 if (response.error !== undefined) {
                     log(`授權錯誤: ${response.error}`);
