@@ -375,7 +375,7 @@
     <div id="debug"></div>
 
     <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://accounts.google.com/gsi/client"></script>
+    <!-- 移除直接的 gsi/client 腳本，改用動態載入 -->
     <!-- 引入 Lightbox2 JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
 
@@ -391,6 +391,23 @@
         function toggleDebug() {
             const debug = document.getElementById('debug');
             debug.style.display = debug.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // 動態載入 Google Identity Services
+        function loadGoogleIdentityScript(callback) {
+            const script = document.createElement('script');
+            script.src = 'https://accounts.google.com/gsi/client';
+            script.async = true;
+            script.onload = () => {
+                log('Google Identity Services 腳本載入成功');
+                callback();
+            };
+            script.onerror = () => {
+                log('Google Identity Services 腳本載入失敗');
+                showMessage('無法載入 Google Identity Services 腳本，請檢查網路連線或禁用廣告攔截器後重試', 'error');
+                loginBtn.disabled = false;
+            };
+            document.head.appendChild(script);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -655,7 +672,14 @@
                     }
                 });
                 
-                loginBtn.addEventListener('click', requestAuth);
+                // 防止按鈕事件被覆蓋
+                loginBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    log('loginBtn 點擊，調用 requestAuth');
+                    requestAuth();
+                });
+
                 photoBtn.addEventListener('click', () => {
                     log('照片按鈕點擊');
                     photoInput.click();
@@ -694,16 +718,22 @@
                     return;
                 }
                 
-                if (gapi.client.getToken() !== null) {
-                    google.accounts.oauth2.revoke(gapi.client.getToken().access_token, () => {
-                        gapi.client.setToken(null);
-                        log('已撤銷先前的令牌');
+                try {
+                    if (gapi.client.getToken() !== null) {
+                        google.accounts.oauth2.revoke(gapi.client.getToken().access_token, () => {
+                            gapi.client.setToken(null);
+                            log('已撤銷先前的令牌');
+                            tokenClient.requestAccessToken();
+                        });
+                    } else {
                         tokenClient.requestAccessToken();
-                    });
-                } else {
-                    tokenClient.requestAccessToken();
+                    }
+                    log('授權請求已發送');
+                } catch (error) {
+                    log(`授權請求失敗: ${error.message}`);
+                    showMessage(`無法啟動 Google 登入: ${error.message}`, 'error');
+                    loginBtn.disabled = false;
                 }
-                log('授權請求已發送');
             }
             
             // 步驟3: 處理授權響應
@@ -711,8 +741,8 @@
                 log('收到授權響應: ' + JSON.stringify(response));
                 
                 if (response.error !== undefined) {
-                    log(`授權錯誤: ${response.error}`);
-                    showMessage(`Google 授權失敗: ${response.error}`, 'error');
+                    log(`授權錯誤: ${response.error} - ${response.error_description || ''}`);
+                    showMessage(`Google 授權失敗: ${response.error} (${response.error_description || '未知錯誤'})`, 'error');
                     loginBtn.disabled = false;
                     return;
                 }
@@ -980,7 +1010,15 @@
             // 初始化應用
             loginBtn.disabled = true;
             showMessage('正在初始化...', 'info');
-            initializeApp();
+            loadGoogleIdentityScript(() => {
+                if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+                    log('錯誤: Google Identity Services 未正確初始化');
+                    showMessage('Google Identity Services 初始化失敗，請檢查網路連線或禁用廣告攔截器後重試', 'error');
+                    loginBtn.disabled = false;
+                    return;
+                }
+                initializeApp();
+            });
         });
     </script>
 </body>
