@@ -747,6 +747,10 @@
                 photoWallGrid.innerHTML = '<div class="photo-wall-loading"><span class="loading-indicator"></span> 載入照片中...</div>';
 
                 try {
+                    // Clear access token to use API_KEY for public access
+                    gapi.client.setToken(null);
+                    log('已清除訪問令牌，使用 API_KEY 進行公開查詢');
+
                     let allFiles = [];
                     let pageToken = null;
 
@@ -1005,6 +1009,11 @@
                     log(`查詢用戶 "${username}" 的現有 ${type} 文件`);
                     
                     const prefix = type === 'photo' ? 'photo_' : type === 'video' ? 'video_' : 'message_';
+                    
+                    // Use access token for querying user-specific files
+                    if (isAuthenticated && accessToken) {
+                        gapi.client.setToken({ access_token: accessToken });
+                    }
                     
                     const response = await gapi.client.drive.files.list({
                         q: `'${FOLDER_ID}' in parents and name contains '${prefix}${username}_'`,
