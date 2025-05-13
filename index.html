@@ -83,6 +83,8 @@
         #morePhotosBtn {
             background: #fbbc05;
             color: #333;
+            width: 120px;
+            margin: 15px auto;
         }
         #morePhotosBtn:active {
             background: #f4b400;
@@ -262,20 +264,25 @@
             margin: 20px 0;
         }
         .photo-wall-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            display: flex;
+            flex-direction: row;
+            overflow-x: auto;
             gap: 10px;
             margin-top: 10px;
+            padding-bottom: 10px;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch; /* 行動裝置平滑滾動 */
         }
         .photo-wall-item {
-            position: relative;
+            flex: 0 0 120px; /* 固定寬度 */
+            height: 120px;
             overflow: hidden;
             border-radius: 4px;
             border: 1px solid #ddd;
         }
         .photo-wall-item img {
             width: 100%;
-            height: 150px;
+            height: 100%;
             object-fit: cover;
             display: block;
         }
@@ -298,93 +305,9 @@
             align-items: center;
             min-height: 100px;
         }
-        /* 右拉式選單樣式 */
-        #photoSidebar {
-            position: fixed;
-            top: 0;
-            right: -300px; /* 預設隱藏 */
-            width: 300px;
-            height: 100%;
-            background: #fff;
-            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
-            transition: right 0.3s ease-in-out;
-            z-index: 1000;
-            overflow-y: auto;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        #photoSidebar.open {
-            right: 0;
-        }
-        #photoSidebarHeader {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        #photoSidebarHeader h2 {
-            font-size: 18px;
-            margin: 0;
-        }
-        #closeSidebarBtn {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: #333;
-        }
-        .sidebar-photo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 10px;
-        }
-        .sidebar-photo-item {
-            position: relative;
-            overflow: hidden;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        .sidebar-photo-item img {
-            width: 100%;
-            height: 100px;
-            object-fit: cover;
-            display: block;
-        }
-        .sidebar-photo-item:hover {
-            opacity: 0.9;
-        }
-        /* 遮罩層 */
-        #sidebarOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease-in-out;
-            z-index: 999;
-        }
-        #sidebarOverlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
     </style>
 </head>
 <body>
-    <!-- 照片牆區塊 -->
-    <div class="section" id="photoWall">
-        <h2>💖 婚禮回憶照片牆 💖</h2>
-        <div class="supplement">看看大家分享的美好時刻！快來上傳你的照片吧！</div>
-        <div id="photoWallGrid" class="photo-wall-grid">
-            <div class="photo-wall-loading">
-                <span class="loading-indicator"></span> 載入照片中...
-            </div>
-        </div>
-        <button id="morePhotosBtn" class="btn" style="display: none;">查看更多照片</button>
-    </div>
-
     <div class="section" id="topPhotoArea">
         <img src="/images/chinese_style2.png" alt="Wedding Decoration" class="header-image">
         <h1>🤵🏻Tim & Lena's👰<br>
@@ -410,7 +333,6 @@
     <div class="section" id="authArea">
         <button id="loginBtn" class="btn">1. 登入 Google 帳號</button>
         <div class="supplement warning">
-			✨若忘記Google帳號or密碼，隨時跟新人們用Line等方式連絡傳遞吧✨
             ✨若看到「未驗證」警告，請點擊「進階」並「繼續」以完成登入✨<br>
         </div>
     </div>
@@ -436,18 +358,21 @@
     </div>
 
     <div id="uploadStatus"></div>
+
+    <!-- 照片牆區塊（移到最下方） -->
+    <div class="section" id="photoWall">
+        <h2>💖 婚禮回憶照片牆 💖</h2>
+        <div class="supplement">看看大家分享的美好時刻！快來上傳你的照片吧！</div>
+        <div id="photoWallGrid" class="photo-wall-grid">
+            <div class="photo-wall-loading">
+                <span class="loading-indicator"></span> 載入照片中...
+            </div>
+        </div>
+        <button id="morePhotosBtn" class="btn" style="display: none;">更多</button>
+    </div>
+
     <span class="toggle-debug" onclick="toggleDebug()">顯示/隱藏調試信息</span>
     <div id="debug"></div>
-
-    <!-- 右拉式選單 -->
-    <div id="photoSidebar">
-        <div id="photoSidebarHeader">
-            <h2>所有照片</h2>
-            <button id="closeSidebarBtn">×</button>
-        </div>
-        <div id="sidebarPhotoGrid" class="sidebar-photo-grid"></div>
-    </div>
-    <div id="sidebarOverlay"></div>
 
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
@@ -490,17 +415,14 @@
             const previewArea = document.getElementById('previewArea');
             const photoWallGrid = document.getElementById('photoWallGrid');
             const morePhotosBtn = document.getElementById('morePhotosBtn');
-            const photoSidebar = document.getElementById('photoSidebar');
-            const sidebarPhotoGrid = document.getElementById('sidebarPhotoGrid');
-            const closeSidebarBtn = document.getElementById('closeSidebarBtn');
-            const sidebarOverlay = document.getElementById('sidebarOverlay');
 
             let accessToken = null;
             let tokenClient = null;
             let isAuthenticated = false;
             let selectedFiles = []; // 儲存 { file: File, type: 'photo'|'video' }
             let mediaURLs = []; // 儲存臨時 URL 以便清理
-            let allPhotos = []; // 儲存所有照片資料
+            let allPhotos = []; // 儲存所有照片
+            let displayedPhotoCount = 0; // 已顯示的照片數量
 
             // 字數計數
             messageInput.addEventListener('input', () => {
@@ -622,7 +544,8 @@
                     log(`找到 ${files.length} 張公開照片`);
                     log(`檔案列表: ${JSON.stringify(files, null, 2)}`);
 
-                    allPhotos = files; // 儲存所有照片供選單使用
+                    allPhotos = files; // 儲存所有照片
+                    displayedPhotoCount = 0;
                     photoWallGrid.innerHTML = '';
 
                     if (files.length === 0) {
@@ -631,35 +554,11 @@
                         return;
                     }
 
-                    // 顯示前 10 張照片
-                    const displayFiles = files.slice(0, 10);
-                    displayFiles.forEach(file => {
-                        const photoItem = document.createElement('div');
-                        photoItem.className = 'photo-wall-item';
-                        const img = document.createElement('img');
-                        img.src = file.thumbnailLink.replace('=s220', '=s800');
-                        img.alt = file.name;
-                        img.onload = () => log(`照片牆圖片載入成功: ${file.name}`);
-                        img.onerror = () => {
-                            log(`照片牆圖片載入失敗: ${file.name}`);
-                            photoItem.innerHTML = '<div class="preview-fallback">圖片無法載入</div>';
-                        };
+                    // 顯示前 5 張照片
+                    loadMorePhotos();
 
-                        const link = document.createElement('a');
-                        link.href = file.webContentLink;
-                        link.setAttribute('data-lightbox', 'photo-wall');
-                        link.setAttribute('data-title', file.name);
-                        link.appendChild(img);
-                        photoItem.appendChild(link);
-
-                        photoWallGrid.appendChild(photoItem);
-                    });
-
-                    // 顯示「查看更多」按鈕（如果照片數量超過 10 張）
-                    morePhotosBtn.style.display = files.length > 10 ? 'block' : 'none';
-
-                    // 渲染側邊欄照片
-                    renderSidebarPhotos();
+                    // 顯示「更多」按鈕（如果還有照片可載入）
+                    updateMoreButton();
                 } catch (error) {
                     log(`載入照片牆失敗: ${error.message}`);
                     if (error.details) {
@@ -670,54 +569,50 @@
                 }
             }
 
-            // 渲染側邊欄照片
-            function renderSidebarPhotos() {
-                sidebarPhotoGrid.innerHTML = '';
-                if (allPhotos.length === 0) {
-                    sidebarPhotoGrid.innerHTML = '<div class="photo-wall-empty">無照片可顯示</div>';
-                    return;
-                }
-
-                allPhotos.forEach(file => {
+            // 載入更多照片（每次 5 張）
+            function loadMorePhotos() {
+                const nextFiles = allPhotos.slice(displayedPhotoCount, displayedPhotoCount + 5);
+                nextFiles.forEach(file => {
                     const photoItem = document.createElement('div');
-                    photoItem.className = 'sidebar-photo-item';
+                    photoItem.className = 'photo-wall-item';
                     const img = document.createElement('img');
-                    img.src = file.thumbnailLink.replace('=s220', '=s400'); // 較小縮圖以節省空間
+                    img.src = file.thumbnailLink.replace('=s220', '=s400');
                     img.alt = file.name;
-                    img.onload = () => log(`側邊欄圖片載入成功: ${file.name}`);
+                    img.onload = () => log(`照片牆圖片載入成功: ${file.name}`);
                     img.onerror = () => {
-                        log(`側邊欄圖片載入失敗: ${file.name}`);
+                        log(`照片牆圖片載入失敗: ${file.name}`);
                         photoItem.innerHTML = '<div class="preview-fallback">圖片無法載入</div>';
                     };
 
                     const link = document.createElement('a');
                     link.href = file.webContentLink;
-                    link.setAttribute('data-lightbox', 'photo-wall'); // 共用 photo-wall 以保持 Lightbox 連續性
+                    link.setAttribute('data-lightbox', 'photo-wall');
                     link.setAttribute('data-title', file.name);
                     link.appendChild(img);
                     photoItem.appendChild(link);
 
-                    sidebarPhotoGrid.appendChild(photoItem);
+                    photoWallGrid.appendChild(photoItem);
                 });
+
+                displayedPhotoCount += nextFiles.length;
+                updateMoreButton();
+
+                // 滾動到最新照片
+                if (nextFiles.length > 0) {
+                    photoWallGrid.scrollLeft = photoWallGrid.scrollWidth;
+                }
             }
 
-            // 打開/關閉側邊欄
-            function openSidebar() {
-                photoSidebar.classList.add('open');
-                sidebarOverlay.classList.add('active');
-                log('側邊欄已打開');
+            // 更新「更多」按鈕的可見性
+            function updateMoreButton() {
+                morePhotosBtn.style.display = displayedPhotoCount < allPhotos.length ? 'block' : 'none';
             }
 
-            function closeSidebar() {
-                photoSidebar.classList.remove('open');
-                sidebarOverlay.classList.remove('active');
-                log('側邊欄已關閉');
-            }
-
-            // 側邊欄事件監聽器
-            morePhotosBtn.addEventListener('click', openSidebar);
-            closeSidebarBtn.addEventListener('click', closeSidebar);
-            sidebarOverlay.addEventListener('click', closeSidebar);
+            // 為「更多」按鈕添加事件監聽器
+            morePhotosBtn.addEventListener('click', () => {
+                log('點擊「更多」按鈕');
+                loadMorePhotos();
+            });
 
             // 步驟1: 初始化API並設置事件監聽器
             function initializeApp() {
