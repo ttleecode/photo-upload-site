@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🤵🏻Tim & Lena's👰 Wedding Day！</title>
-    <!-- 引入 Lightbox2 CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
     <style>
         body { 
@@ -279,8 +278,9 @@
             border-radius: 4px;
             border: 1px solid #ddd;
             position: relative;
+            cursor: pointer;
         }
-        .photo-wall-item img, .photo-wall-item video {
+        .photo-wall-item img {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -298,7 +298,7 @@
             color: white;
             font-size: 24px;
             text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-            pointer-events: none; /* 確保播放圖示不阻礙點擊 */
+            pointer-events: none;
         }
         .photo-wall-loading {
             display: flex;
@@ -320,7 +320,7 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            z-index: 1000;
+            z-index: 10;
         }
         .language-icon {
             font-size: 24px;
@@ -333,7 +333,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1001;
+            z-index: 11;
         }
         .language-dropdown {
             display: none;
@@ -344,7 +344,7 @@
             border: 1px solid #ccc;
             border-radius: 4px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            z-index: 1002;
+            z-index: 12;
         }
         .language-dropdown.show {
             display: block;
@@ -511,14 +511,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
 
     <script>
-        // 初始化 Lightbox
-        lightbox.option({
-            'alwaysShowNavOnTouchDevices': true,
-            'wrapAround': true,
-            'fitImagesInViewport': true,
-            'albumLabel': '檔案 %1 / %2'
-        });
-
         function log(message) {
             const debug = document.getElementById('debug');
             const timestamp = new Date().toLocaleTimeString();
@@ -541,8 +533,8 @@
             };
             script.onerror = () => {
                 log('Google Identity Services 腳本載入失敗');
-                showMessage('無法載入 Google Identity Services 腳本，請檢查網路連線或禁用廣告攔截器後重試', 'error');
-                loginBtn.disabled = false;
+                showMessage('無法載入 Google Identity Services 腳本，請檢查網路或禁用廣告攔截器', 'error');
+                callback(); // 繼續執行，確保不終止
             };
             document.head.appendChild(script);
         }
@@ -554,7 +546,7 @@
                 username_label: '親友姓名：',
                 username_placeholder: '輸入您的姓名',
                 login_button: '1. 登入 Google 帳號',
-                auth_warning: '✨若忘記Google帳號密碼，隨時跟新人們用Line連絡傳遞吧✨<br>✨若看到「未驗證」警告，請點擊「進階」並「繼續」登入✨<br>',
+                auth_warning: '✨若忘記Google帳號密碼，隨時跟新人們用Line連絡傳遞吧✨<br>✨若看到「未驗證」警告，請點擊「進階」並「繼續」登入✨',
                 photo_button: '📸選擇照片📸',
                 video_button: '🎥選擇影片🎥',
                 file_info_photo: '支援的照片格式: JPG, PNG, GIF 等',
@@ -573,7 +565,7 @@
                 username_label: 'Friend\'s Name:',
                 username_placeholder: 'Enter your name',
                 login_button: '1. Sign in with Google',
-                auth_warning: '✨If you forget your Google account password, contact the couple via Line anytime ✨<br>✨If you see an "unverified" warning, click "Advanced" and "Continue" to sign in ✨<br>',
+                auth_warning: '✨If you forget your Google account password, contact the couple via Line anytime ✨<br>✨If you see an "unverified" warning, click "Advanced" and "Continue" to sign in ✨',
                 photo_button: '📸Select Photos📸',
                 video_button: '🎥Select Videos🎥',
                 file_info_photo: 'Supported photo formats: JPG, PNG, GIF, etc.',
@@ -591,47 +583,69 @@
         function applyLanguage(lang) {
             localStorage.setItem('language', lang);
             log(`應用語系: ${lang}`);
-
             document.querySelectorAll('[data-i18n]').forEach(element => {
                 const key = element.getAttribute('data-i18n');
                 if (translations[lang][key]) {
                     element.innerHTML = translations[lang][key];
                 }
             });
-
             document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
                 const key = element.getAttribute('data-i18n-placeholder');
                 if (translations[lang][key]) {
                     element.placeholder = translations[lang][key];
                 }
             });
-
             document.documentElement.lang = lang;
         }
 
+        function showMessage(message, type = 'info', progress = null) {
+            const uploadStatus = document.getElementById('uploadStatus');
+            const messageDiv = document.createElement('div');
+            if (progress !== null) {
+                messageDiv.className = 'progress-container';
+                messageDiv.innerHTML = `<div class="progress-bar" style="width: ${progress}%"></div>`;
+            } else {
+                messageDiv.className = `status-message ${type}`;
+                messageDiv.textContent = message;
+            }
+            uploadStatus.innerHTML = '';
+            uploadStatus.appendChild(messageDiv);
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+
+        function clearMessages() {
+            document.getElementById('uploadStatus').innerHTML = '';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+            else if (bytes < 1073741824) return (bytes / 1048576).toFixed(2) + ' MB';
+            else return (bytes / 1073741824).toFixed(2) + ' GB';
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            // 初始化 Lightbox
+            try {
+                lightbox.option({
+                    'alwaysShowNavOnTouchDevices': true,
+                    'wrapAround': true,
+                    'fitImagesInViewport': true,
+                    'albumLabel': '檔案 %1 / %2'
+                });
+                log('Lightbox 初始化成功');
+            } catch (error) {
+                log(`Lightbox 初始化失敗: ${error.message}`);
+                showMessage('Lightbox 初始化失敗，請檢查網路或稍後重試', 'error');
+            }
+
             const CLIENT_ID = '1059727961676-mba09jlh8is4qrec86o8osrbd3cgld0l.apps.googleusercontent.com';
             const API_KEY = 'AIzaSyDW8iK2KvaYHHTUw-n5cN6n8AfVMm3Msd8';
             const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
             const SCOPES = 'https://www.googleapis.com/auth/drive.file';
             const FOLDER_ID = '1qnlf5S3Wt1QPJ2WupXcyTnJDm7rUDIrt';
 
-            const loginBtn = document.getElementById('loginBtn');
-            const uploadArea = document.getElementById('uploadArea');
-            const photoInput = document.getElementById('photoInput');
-            const videoInput = document.getElementById('videoInput');
-            const messageInput = document.getElementById('messageInput');
-            const charCount = document.getElementById('charCount');
-            const photoBtn = document.getElementById('photoBtn');
-            const videoBtn = document.getElementById('videoBtn');
-            const confirmUploadBtn = document.getElementById('confirmUploadBtn');
-            const uploadStatus = document.getElementById('uploadStatus');
-            const previewArea = document.getElementById('previewArea');
-            const photoWallGrid = document.getElementById('photoWallGrid');
-            const morePhotosBtn = document.getElementById('morePhotosBtn');
-            const languageIcon = document.getElementById('languageIcon');
-            const languageDropdown = document.getElementById('languageDropdown');
-
+            let loginBtn, uploadArea, photoInput, videoInput, messageInput, charCount, photoBtn, videoBtn, confirmUploadBtn, uploadStatus, previewArea, photoWallGrid, morePhotosBtn, languageIcon, languageDropdown;
             let accessToken = null;
             let tokenClient = null;
             let isAuthenticated = false;
@@ -640,66 +654,127 @@
             let allPhotos = [];
             let displayedPhotoCount = 0;
 
-            const savedLang = localStorage.getItem('language') || 'zh-TW';
-            applyLanguage(savedLang);
+            function initializeElements() {
+                loginBtn = document.getElementById('loginBtn');
+                uploadArea = document.getElementById('uploadArea');
+                photoInput = document.getElementById('photoInput');
+                videoInput = document.getElementById('videoInput');
+                messageInput = document.getElementById('messageInput');
+                charCount = document.getElementById('charCount');
+                photoBtn = document.getElementById('photoBtn');
+                videoBtn = document.getElementById('videoBtn');
+                confirmUploadBtn = document.getElementById('confirmUploadBtn');
+                uploadStatus = document.getElementById('uploadStatus');
+                previewArea = document.getElementById('previewArea');
+                photoWallGrid = document.getElementById('photoWallGrid');
+                morePhotosBtn = document.getElementById('morePhotosBtn');
+                languageIcon = document.getElementById('languageIcon');
+                languageDropdown = document.getElementById('languageDropdown');
 
-            languageIcon.addEventListener('click', (e) => {
-                e.stopPropagation();
-                languageDropdown.classList.toggle('show');
-                log('語系選單切換顯示狀態');
-            });
+                if (!loginBtn || !photoBtn || !videoBtn || !languageIcon) {
+                    log('錯誤: 無法找到必要的 DOM 元素');
+                    showMessage('頁面初始化失敗，請重新載入', 'error');
+                    return false;
+                }
+                return true;
+            }
 
-            document.querySelectorAll('.language-option').forEach(option => {
-                option.addEventListener('click', (e) => {
-                    const lang = e.target.getAttribute('data-lang');
-                    log(`選擇語系: ${lang}`);
-                    applyLanguage(lang);
-                    languageDropdown.classList.remove('show');
+            function bindEvents() {
+                languageIcon.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    languageDropdown.classList.toggle('show');
+                    log('語系選單切換顯示狀態');
                 });
-            });
+                languageIcon.addEventListener('touchstart', (e) => {
+                    e.stopPropagation();
+                    languageDropdown.classList.toggle('show');
+                    log('語系選單觸控顯示');
+                });
 
-            document.addEventListener('click', (e) => {
-                if (!languageIcon.contains(e.target) && !languageDropdown.contains(e.target)) {
-                    languageDropdown.classList.remove('show');
-                }
-            });
+                document.querySelectorAll('.language-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        const lang = e.target.getAttribute('data-lang');
+                        log(`選擇語系: ${lang}`);
+                        applyLanguage(lang);
+                        languageDropdown.classList.remove('show');
+                    });
+                });
 
-            messageInput.addEventListener('input', () => {
-                const count = messageInput.value.length;
-                charCount.textContent = `${count}/500 字`;
-                charCount.classList.toggle('warning', count > 450);
-            });
+                document.addEventListener('click', (e) => {
+                    if (!languageIcon.contains(e.target) && !languageDropdown.contains(e.target)) {
+                        languageDropdown.classList.remove('show');
+                    }
+                });
 
-            function showMessage(message, type = 'info', progress = null) {
-                const messageDiv = document.createElement('div');
-                if (progress !== null) {
-                    messageDiv.className = 'progress-container';
-                    messageDiv.innerHTML = 
-                        `<div class="progress-bar" style="width: ${progress}%"></div>`;
-                } else {
-                    messageDiv.className = `status-message ${type}`;
-                    messageDiv.textContent = message;
-                }
-                uploadStatus.innerHTML = '';
-                uploadStatus.appendChild(messageDiv);
-                window.scrollTo(0, document.body.scrollHeight);
+                messageInput.addEventListener('input', () => {
+                    const count = messageInput.value.length;
+                    charCount.textContent = `${count}/500 字`;
+                    charCount.classList.toggle('warning', count > 450);
+                });
+
+                loginBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    log('loginBtn 點擊');
+                    requestAuth();
+                });
+                loginBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    log('loginBtn 觸控');
+                    requestAuth();
+                });
+
+                photoBtn.addEventListener('click', () => {
+                    log('照片按鈕點擊');
+                    photoInput.click();
+                });
+                photoBtn.addEventListener('touchstart', () => {
+                    log('照片按鈕觸控');
+                    photoInput.click();
+                });
+
+                videoBtn.addEventListener('click', () => {
+                    log('影片按鈕點擊');
+                    videoInput.click();
+                });
+                videoBtn.addEventListener('touchstart', () => {
+                    log('影片按鈕觸控');
+                    videoInput.click();
+                });
+
+                photoInput.addEventListener('change', (e) => {
+                    log('照片輸入框變更');
+                    handleFileSelection(e, 'photo');
+                });
+
+                videoInput.addEventListener('change', (e) => {
+                    log('影片輸入框變更');
+                    handleFileSelection(e, 'video');
+                });
+
+                confirmUploadBtn.addEventListener('click', () => {
+                    log('確認上傳按鈕點擊');
+                    if (selectedFiles.length > 0) {
+                        uploadFiles(selectedFiles, messageInput.value.trim());
+                    } else {
+                        showMessage('請選擇照片或影片！', 'error');
+                    }
+                });
+
+                morePhotosBtn.addEventListener('click', () => {
+                    log('更多按鈕點擊');
+                    loadMorePhotos();
+                });
+                morePhotosBtn.addEventListener('touchstart', () => {
+                    log('更多按鈕觸控');
+                    loadMorePhotos();
+                });
+
+                log('所有事件監聽器綁定完成');
             }
 
-            function clearMessages() {
-                uploadStatus.innerHTML = '';
-            }
-            
-            function formatFileSize(bytes) {
-                if (bytes < 1024) return bytes + ' B';
-                else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
-                else if (bytes < 1073741824) return (bytes / 1048576).toFixed(2) + ' MB';
-                else return (bytes / 1073741824).toFixed(2) + ' GB';
-            }
-            
             function previewFiles() {
                 mediaURLs.forEach(url => URL.revokeObjectURL(url));
                 mediaURLs = [];
-                
                 previewArea.innerHTML = '';
                 
                 if (selectedFiles.length === 0) {
@@ -764,7 +839,7 @@
             }
 
             async function loadPhotoWall() {
-                log('開始載入照片牆（包含照片和影片）...');
+                log('開始載入照片牆...');
                 photoWallGrid.innerHTML = '<div class="photo-wall-loading"><span class="loading-indicator"></span> 載入內容中...</div>';
 
                 try {
@@ -775,7 +850,7 @@
                     });
 
                     const files = response.result.files || [];
-                    log(`找到 ${files.length} 個公開檔案（照片和影片）`);
+                    log(`找到 ${files.length} 個公開檔案`);
                     log(`檔案列表: ${JSON.stringify(files.map(f => ({ id: f.id, name: f.name, mimeType: f.mimeType })), null, 2)}`);
 
                     allPhotos = files;
@@ -783,9 +858,9 @@
                     photoWallGrid.innerHTML = '';
 
                     if (files.length === 0) {
-                        photoWallGrid.innerHTML = `<div class="photo-wall-empty" data-i18n="photo_wall_empty">${translations[savedLang].photo_wall_empty}</div>`;
+                        photoWallGrid.innerHTML = `<div class="photo-wall-empty" data-i18n="photo_wall_empty">${translations[localStorage.getItem('language') || 'zh-TW'].photo_wall_empty}</div>`;
                         morePhotosBtn.style.display = 'none';
-                        log('照片牆為空，顯示空訊息');
+                        log('照片牆為空');
                         return;
                     }
 
@@ -793,10 +868,8 @@
                     updateMoreButton();
                 } catch (error) {
                     log(`載入照片牆失敗: ${error.message}`);
-                    if (error.details) {
-                        log(`錯誤詳情: ${error.details}`);
-                    }
-                    photoWallGrid.innerHTML = `<div class="photo-wall-empty" data-i18n="photo_wall_empty">${translations[savedLang].photo_wall_empty}</div>`;
+                    if (error.details) log(`錯誤詳情: ${error.details}`);
+                    photoWallGrid.innerHTML = `<div class="photo-wall-empty" data-i18n="photo_wall_empty">${translations[localStorage.getItem('language') || 'zh-TW'].photo_wall_empty}</div>`;
                     morePhotosBtn.style.display = 'none';
                     showMessage('無法載入照片牆，請檢查網路或稍後再試', 'error');
                 }
@@ -818,9 +891,9 @@
                         const img = document.createElement('img');
                         img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s400') : 'https://via.placeholder.com/400';
                         img.alt = file.name;
-                        img.onload = () => log(`照片牆圖片載入成功: ${file.name}`);
+                        img.onload = () => log(`照片縮圖載入成功: ${file.name}`);
                         img.onerror = () => {
-                            log(`照片牆圖片載入失敗: ${file.name}`);
+                            log(`照片縮圖載入失敗: ${file.name}`);
                             img.src = 'https://via.placeholder.com/400';
                         };
                         link.appendChild(img);
@@ -854,18 +927,15 @@
                 morePhotosBtn.style.display = displayedPhotoCount < allPhotos.length ? 'block' : 'none';
             }
 
-            morePhotosBtn.addEventListener('click', () => {
-                log('點擊「更多」按鈕');
-                loadMorePhotos();
-            });
-
             function initializeApp() {
                 log('應用初始化中...');
                 showMessage('正在初始化，請稍候...', 'info');
 
+                if (!initializeElements()) return;
+
                 if (!window.gapi) {
                     log('錯誤: Google API 客戶端未載入');
-                    showMessage('無法載入 Google API 客戶端庫，請檢查網路連線或稍後再試', 'error');
+                    showMessage('無法載入 Google API 客戶端庫，請檢查網路或稍後重試', 'error');
                     loginBtn.disabled = false;
                     return;
                 }
@@ -888,49 +958,17 @@
                         loginBtn.disabled = false;
                         showMessage('初始化完成，請登入 Google 帳號', 'info');
                         
+                        bindEvents();
                         loadPhotoWall();
                     } catch (error) {
                         log(`初始化失敗: ${error.message}`);
-                        if (error.details) {
-                            log(`錯誤詳情: ${error.details}`);
-                        }
-                        showMessage(`初始化 Google API 失敗: ${error.message}. 請檢查網路連線或稍後重試。`, 'error');
+                        if (error.details) log(`錯誤詳情: ${error.details}`);
+                        showMessage(`初始化 Google API 失敗: ${error.message}. 請檢查網路或稍後重試。`, 'error');
                         loginBtn.disabled = false;
                     }
                 });
-                
-                loginBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    log('loginBtn 點擊，調用 requestAuth');
-                    requestAuth();
-                });
-
-                photoBtn.addEventListener('click', () => {
-                    log('照片按鈕點擊');
-                    photoInput.click();
-                });
-                videoBtn.addEventListener('click', () => {
-                    log('影片按鈕點擊');
-                    videoInput.click();
-                });
-                photoInput.addEventListener('change', (e) => {
-                    log('照片輸入框變更');
-                    handleFileSelection(e, 'photo');
-                });
-                videoInput.addEventListener('change', (e) => {
-                    log('影片輸入框變更');
-                    handleFileSelection(e, 'video');
-                });
-                confirmUploadBtn.addEventListener('click', () => {
-                    if (selectedFiles.length > 0) {
-                        uploadFiles(selectedFiles, messageInput.value.trim());
-                    } else {
-                        showMessage('請選擇照片或影片！', 'error');
-                    }
-                });
             }
-            
+
             function requestAuth() {
                 log('請求 Google 授權...');
                 showMessage('正在連接 Google 帳號...', 'info');
@@ -960,31 +998,31 @@
                     loginBtn.disabled = false;
                 }
             }
-            
+
             function handleAuthResponse(response) {
-                log('收到授權響應: ' + JSON.stringify(response));
+                log('收到授權響應');
                 
                 if (response.error !== undefined) {
                     log(`授權錯誤: ${response.error} - ${response.error_description || ''}`);
-                    showMessage(`Google 授權失敗: ${response.error} (${response.error_description || '未知錯誤'})`, 'error');
+                    showMessage(`Google 授權失敗: ${response.error}`, 'error');
                     loginBtn.disabled = false;
                     return;
                 }
                 
                 accessToken = response.access_token;
                 isAuthenticated = true;
-                log(`授權成功，獲取令牌: ${accessToken.substring(0, 5)}...`);
+                log(`授權成功，獲取令牌`);
                 
-                loginBtn.textContent = '✓ Google 帳號已連接';
+                loginBtn.textContent = translations[localStorage.getItem('language') || 'zh-TW'].login_button.replace('1. ', '✓ ');
                 loginBtn.style.background = '#34a853';
                 uploadArea.style.display = 'block';
                 
                 showMessage('Google 帳號連接成功！現在可以上傳照片、影片或留言。', 'success');
             }
-            
+
             function handleFileSelection(event, type) {
                 const files = event.target.files;
-                log(`已選擇 ${files.length} 個${type === 'photo' ? '照片' : '影片'}文件`);
+                log(`已選擇 ${files.length} 個${type === 'photo' ? '照片' : '影片'}`);
                 
                 if (!files || files.length === 0) {
                     showMessage(`未選擇任何${type === 'photo' ? '照片' : '影片'}`, 'info');
@@ -1014,34 +1052,30 @@
                 }
                 
                 if (largeFiles.length > 0) {
-                    showMessage(`警告: 檢測到較大的文件，上傳可能需要較長時間: ${largeFiles.join(', ')}`, 'warning');
+                    showMessage(`警告: 檢測到較大的檔案，上傳可能需要較長時間: ${largeFiles.join(', ')}`, 'warning');
                 }
                 
-                log(`總文件大小: ${formatFileSize(totalSize)}`);
+                log(`總檔案大小: ${formatFileSize(totalSize)}`);
             }
-            
+
             async function getNextFileNumber(username, type) {
                 try {
-                    log(`查詢用戶 "${username}" 的現有 ${type} 文件`);
-                    
+                    log(`查詢用戶 "${username}" 的 ${type} 檔案數量`);
                     const prefix = type === 'photo' ? 'photo_' : type === 'video' ? 'video_' : 'message_';
-                    
                     const response = await gapi.client.drive.files.list({
                         q: `'${FOLDER_ID}' in parents and name contains '${prefix}${username}_'`,
                         fields: 'files(name)'
                     });
-                    
                     const files = response.result.files || [];
-                    log(`找到 ${files.length} 個現有 ${type} 文件`);
-                    
+                    log(`找到 ${files.length} 個 ${type} 檔案`);
                     return files.length + 1;
                 } catch (error) {
-                    log(`無法獲取文件編號: ${error.message}`);
-                    showMessage(`無法獲取文件編號: ${error.message}`, 'error');
+                    log(`無法獲取檔案編號: ${error.message}`);
+                    showMessage(`無法獲取檔案編號: ${error.message}`, 'error');
                     throw error;
                 }
             }
-            
+
             async function uploadFiles(items, message) {
                 clearMessages();
                 const username = document.getElementById('username').value.trim();
@@ -1061,7 +1095,7 @@
                     
                     gapi.client.setToken({ access_token: accessToken });
                     
-                    const photos = items효소('photo');
+                    const photos = items.filter(item => item.type === 'photo');
                     const videos = items.filter(item => item.type === 'video');
                     
                     let completedFiles = 0;
@@ -1083,7 +1117,7 @@
                             const fileName = `photo_${username}_${fileNumber}`;
                             const fileSize = formatFileSize(file.size);
                             
-                            log(`上傳中: ${fileName} (${fileSize}) - (${i+1}/${photos.length})`);
+                            log(`上傳中: ${fileName} (${fileSize})`);
                             
                             const metadata = {
                                 name: fileName,
@@ -1097,26 +1131,19 @@
                             form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }));
                             form.append('file', file);
                             
-                            try {
-                                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Authorization': `Bearer ${accessToken}`
-                                    },
-                                    body: form
-                                });
-                                
-                                const result = await response.json();
-                                if (response.ok) {
-                                    log(`上傳成功: ${fileName} (ID: ${result.id})`);
-                                    updateProgress();
-                                } else {
-                                    log(`上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
-                                    throw new Error(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`);
-                                }
-                            } catch (uploadError) {
-                                log(`上傳過程中出錯: ${fileName} - ${uploadError.message}`);
-                                throw uploadError;
+                            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${accessToken}` },
+                                body: form
+                            });
+                            
+                            const result = await response.json();
+                            if (response.ok) {
+                                log(`上傳成功: ${fileName} (ID: ${result.id})`);
+                                updateProgress();
+                            } else {
+                                log(`上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
+                                throw new Error(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`);
                             }
                         }
                     }
@@ -1132,7 +1159,7 @@
                             const fileName = `video_${username}_${fileNumber}`;
                             const fileSize = formatFileSize(file.size);
                             
-                            log(`上傳中: ${fileName} (${fileSize}) - (${i+1}/${videos.length})`);
+                            log(`上傳中: ${fileName} (${fileSize})`);
                             
                             const metadata = {
                                 name: fileName,
@@ -1146,26 +1173,19 @@
                             form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }));
                             form.append('file', file);
                             
-                            try {
-                                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Authorization': `Bearer ${accessToken}`
-                                    },
-                                    body: form
-                                });
-                                
-                                const result = await response.json();
-                                if (response.ok) {
-                                    log(`上傳成功: ${fileName} (ID: ${result.id})`);
-                                    updateProgress();
-                                } else {
-                                    log(`上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
-                                    throw new Error(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`);
-                                }
-                            } catch (uploadError) {
-                                log(`上傳過程中出錯: ${fileName} - ${uploadError.message}`);
-                                throw uploadError;
+                            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${accessToken}` },
+                                body: form
+                            });
+                            
+                            const result = await response.json();
+                            if (response.ok) {
+                                log(`上傳成功: ${fileName} (ID: ${result.id})`);
+                                updateProgress();
+                            } else {
+                                log(`上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
+                                throw new Error(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`);
                             }
                         }
                     }
@@ -1186,30 +1206,23 @@
                         form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }));
                         form.append('file', new Blob([message], { type: 'text/plain' }));
                         
-                        try {
-                            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                                method: 'POST',
-                                headers: {
-                                    'Authorization': `Bearer ${accessToken}`
-                                },
-                                body: form
-                            });
-                            
-                            const result = await response.json();
-                            if (response.ok) {
-                                log(`留言上傳成功: ${fileName} (ID: ${result.id})`);
-                                updateProgress();
-                            } else {
-                                log(`留言上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
-                                throw new Error(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`);
-                            }
-                        } catch (uploadError) {
-                            log(`留言上傳過程中出錯: ${fileName} - ${uploadError.message}`);
-                            throw uploadError;
+                        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${accessToken}` },
+                            body: form
+                        });
+                        
+                        const result = await response.json();
+                        if (response.ok) {
+                            log(`留言上傳成功: ${fileName} (ID: ${result.id})`);
+                            updateProgress();
+                        } else {
+                            log(`留言上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
+                            throw new Error(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`);
                         }
                     }
                     
-                    log('所有文件上傳完畢');
+                    log('所有檔案上傳完畢');
                     showMessage(`${photos.length}個照片，${videos.length}個影片${message ? '和留言' : ''}上傳完畢，謝謝您的分享！`, 'success');
                     previewArea.innerHTML = '';
                     selectedFiles = [];
@@ -1220,24 +1233,26 @@
                     mediaURLs = [];
                     photoInput.value = '';
                     videoInput.value = '';
-                    log('上傳完成，已重置照片、影片和留言輸入框');
+                    log('上傳完成，重置輸入框');
                     
                     setTimeout(() => {
                         log('延遲後重新載入照片牆');
                         loadPhotoWall();
                     }, 2000);
                 } catch (error) {
-                    log(`上傳過程錯誤: ${error.message}`);
+                    log(`上傳錯誤: ${error.message}`);
                     showMessage(`上傳錯誤: ${error.message}`, 'error');
                 }
             }
-            
+
+            const savedLang = localStorage.getItem('language') || 'zh-TW';
+            applyLanguage(savedLang);
             loginBtn.disabled = true;
             showMessage('正在初始化...', 'info');
             loadGoogleIdentityScript(() => {
                 if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
                     log('錯誤: Google Identity Services 未正確初始化');
-                    showMessage('Google Identity Services 初始化失敗，請檢查網路連線或禁用廣告攔截器後重試', 'error');
+                    showMessage('Google Identity Services 初始化失敗，請檢查網路或禁用廣告攔截器', 'error');
                     loginBtn.disabled = false;
                     return;
                 }
