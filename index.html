@@ -514,11 +514,17 @@
             const script = document.createElement('script');
             script.src = primarySrc;
             script.async = true;
+            script.timeout = setTimeout(() => {
+                log('Lightbox 腳本載入超時');
+                callback(false);
+            }, 10000);
             script.onload = () => {
+                clearTimeout(script.timeout);
                 log('Lightbox 腳本載入成功');
                 callback(true);
             };
             script.onerror = () => {
+                clearTimeout(script.timeout);
                 log('Lightbox 腳本載入失敗');
                 showMessage('無法載入 Lightbox 腳本，請檢查網路或禁用廣告攔截器', 'error');
                 callback(false);
@@ -549,6 +555,10 @@
 
         function log(message) {
             const debug = document.getElementById('debug');
+            if (!debug) {
+                console.log(`[Debug Missing] ${message}`);
+                return;
+            }
             const timestamp = new Date().toLocaleTimeString();
             debug.innerHTML += `<div>[${timestamp}] ${message}</div>`;
             console.log(message);
@@ -556,18 +566,26 @@
         
         function toggleDebug() {
             const debug = document.getElementById('debug');
-            debug.style.display = debug.style.display === 'none' ? 'block' : 'none';
+            if (debug) {
+                debug.style.display = debug.style.display === 'none' ? 'block' : 'none';
+            }
         }
 
         function loadGoogleIdentityScript(callback) {
             const script = document.createElement('script');
             script.src = 'https://accounts.google.com/gsi/client';
             script.async = true;
+            script.timeout = setTimeout(() => {
+                log('Google Identity Services 腳本載入超時');
+                callback();
+            }, 10000);
             script.onload = () => {
+                clearTimeout(script.timeout);
                 log('Google Identity Services 腳本載入成功');
                 callback();
             };
             script.onerror = () => {
+                clearTimeout(script.timeout);
                 log('Google Identity Services 腳本載入失敗');
                 showMessage('無法載入 Google Identity Services 腳本，請檢查網路或禁用廣告攔截器', 'error');
                 callback();
@@ -675,7 +693,7 @@
                 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
                 const FOLDER_ID = '1qnlf5S3Wt1QPJ2WupXcyTnJDm7rUDIrt';
 
-                let loginBtn, uploadArea, photoInput, videoInput, messageInput, charCount, photoBtn, videoBtn, confirmUploadBtn, uploadStatus, previewArea, photoWallGrid, morePhotosBtn, languageIcon, languageDropdown;
+                let elements = null;
                 let accessToken = null;
                 let tokenClient = null;
                 let isAuthenticated = false;
@@ -686,7 +704,7 @@
                 let isLightboxAvailable = false;
 
                 function initializeElements() {
-                    const elements = {
+                    const requiredElements = {
                         loginBtn: document.getElementById('loginBtn'),
                         uploadArea: document.getElementById('uploadArea'),
                         photoInput: document.getElementById('photoInput'),
@@ -704,16 +722,15 @@
                         languageDropdown: document.getElementById('languageDropdown')
                     };
 
-                    const missingElements = Object.keys(elements).filter(key => !elements[key]);
+                    const missingElements = Object.keys(requiredElements).filter(key => !requiredElements[key]);
                     if (missingElements.length > 0) {
                         log(`錯誤: 缺少 DOM 元素: ${missingElements.join(', ')}`);
                         showMessage(`頁面初始化失敗，缺少元素: ${missingElements.join(', ')}，請重新載入`, 'error');
                         return null;
                     }
 
-                    Object.assign({ loginBtn, uploadArea, photoInput, videoInput, messageInput, charCount, photoBtn, videoBtn, confirmUploadBtn, uploadStatus, previewArea, photoWallGrid, morePhotosBtn, languageIcon, languageDropdown }, elements);
                     log('DOM 元素初始化成功');
-                    return elements;
+                    return requiredElements;
                 }
 
                 function bindEvents(elements) {
@@ -752,12 +769,12 @@
                     elements.loginBtn.addEventListener('click', (e) => {
                         e.preventDefault();
                         log('登入按鈕點擊');
-                        requestAuth();
+                        requestAuth(elements);
                     });
                     elements.loginBtn.addEventListener('touchstart', (e) => {
                         e.preventDefault();
                         log('登入按鈕觸控');
-                        requestAuth();
+                        requestAuth(elements);
                     });
 
                     elements.photoBtn.addEventListener('click', () => {
@@ -780,18 +797,18 @@
 
                     elements.photoInput.addEventListener('change', (e) => {
                         log('照片輸入變更');
-                        handleFileSelection(e, 'photo');
+                        handleFileSelection(e, 'photo', elements);
                     });
 
                     elements.videoInput.addEventListener('change', (e) => {
                         log('影片輸入變更');
-                        handleFileSelection(e, 'video');
+                        handleFileSelection(e, 'video', elements);
                     });
 
                     elements.confirmUploadBtn.addEventListener('click', () => {
                         log('確認上傳按鈕點擊');
                         if (selectedFiles.length > 0) {
-                            uploadFiles(selectedFiles, elements.messageInput.value.trim());
+                            uploadFiles(selectedFiles, elements.messageInput.value.trim(), elements);
                         } else {
                             showMessage('請選擇照片或影片！', 'error');
                         }
@@ -809,19 +826,19 @@
                     log('所有事件監聽器綁定完成');
                 }
 
-                function previewFiles() {
+                function previewFiles(elements) {
                     mediaURLs.forEach(url => URL.revokeObjectURL(url));
                     mediaURLs = [];
-                    previewArea.innerHTML = '';
+                    elements.previewArea.innerHTML = '';
                     
                     if (selectedFiles.length === 0) {
-                        previewArea.innerHTML = '<div class="file-info">尚未選擇檔案</div>';
-                        confirmUploadBtn.style.display = 'none';
+                        elements.previewArea.innerHTML = '<div class="file-info">尚未選擇檔案</div>';
+                        elements.confirmUploadBtn.style.display = 'none';
                         return;
                     }
 
-                    confirmUploadBtn.style.display = 'block';
-                    previewArea.innerHTML = `<div class="file-info">已選擇 ${selectedFiles.length} 個檔案</div>`;
+                    elements.confirmUploadBtn.style.display = 'block';
+                    elements.previewArea.innerHTML = `<div class="file-info">已選擇 ${selectedFiles.length} 個檔案</div>`;
 
                     selectedFiles.forEach((item, index) => {
                         const previewItem = document.createElement('div');
@@ -862,22 +879,22 @@
                         removeBtn.textContent = '×';
                         removeBtn.onclick = () => {
                             selectedFiles.splice(index, 1);
-                            previewFiles();
+                            previewFiles(elements);
                             log(`已移除檔案: ${item.file.name}`);
                         };
                         previewItem.appendChild(removeBtn);
 
-                        previewArea.appendChild(previewItem);
+                        elements.previewArea.appendChild(previewItem);
                     });
 
-                    photoInput.value = '';
-                    videoInput.value = '';
+                    elements.photoInput.value = '';
+                    elements.videoInput.value = '';
                     log('已重置照片和影片輸入框');
                 }
 
-                async function loadPhotoWall() {
+                async function loadPhotoWall(elements) {
                     log('開始載入照片牆...');
-                    photoWallGrid.innerHTML = '<div class="photo-wall-loading"><span class="loading-indicator"></span> 載入內容中...</div>';
+                    elements.photoWallGrid.innerHTML = '<div class="photo-wall-loading"><span class="loading-indicator"></span> 載入內容中...</div>';
 
                     try {
                         const response = await gapi.client.drive.files.list({
@@ -892,27 +909,27 @@
 
                         allPhotos = files;
                         displayedPhotoCount = 0;
-                        photoWallGrid.innerHTML = '';
+                        elements.photoWallGrid.innerHTML = '';
 
                         if (files.length === 0) {
-                            photoWallGrid.innerHTML = `<div class="photo-wall-empty" data-i18n="photo_wall_empty">${translations[localStorage.getItem('language') || 'zh-TW'].photo_wall_empty}</div>`;
-                            morePhotosBtn.style.display = 'none';
+                            elements.photoWallGrid.innerHTML = `<div class="photo-wall-empty" data-i18n="photo_wall_empty">${translations[localStorage.getItem('language') || 'zh-TW'].photo_wall_empty}</div>`;
+                            elements.morePhotosBtn.style.display = 'none';
                             log('照片牆為空');
                             return;
                         }
 
-                        loadMorePhotos();
-                        updateMoreButton();
+                        loadMorePhotos(elements);
+                        updateMoreButton(elements);
                     } catch (error) {
                         log(`載入照片牆失敗: ${error.message}`);
                         if (error.details) log(`錯誤詳情: ${error.details}`);
-                        photoWallGrid.innerHTML = `<div class="photo-wall-empty" data-i18n="photo_wall_empty">${translations[localStorage.getItem('language') || 'zh-TW'].photo_wall_empty}</div>`;
-                        morePhotosBtn.style.display = 'none';
+                        elements.photoWallGrid.innerHTML = `<div class="photo-wall-empty" data-i18n="photo_wall_empty">${translations[localStorage.getItem('language') || 'zh-TW'].photo_wall_empty}</div>`;
+                        elements.morePhotosBtn.style.display = 'none';
                         showMessage('無法載入照片牆，請檢查網路或稍後再試', 'error');
                     }
                 }
 
-                function loadMorePhotos() {
+                function loadMorePhotos(elements) {
                     const nextFiles = allPhotos.slice(displayedPhotoCount, displayedPhotoCount + 5);
                     log(`載入更多檔案: 從 ${displayedPhotoCount} 到 ${displayedPhotoCount + nextFiles.length}`);
 
@@ -955,7 +972,7 @@
                         }
 
                         photoItem.appendChild(link);
-                        photoWallGrid.appendChild(photoItem);
+                        elements.photoWallGrid.appendChild(photoItem);
 
                         if (!isLightboxAvailable) {
                             link.addEventListener('click', (e) => {
@@ -968,15 +985,15 @@
                     });
 
                     displayedPhotoCount += nextFiles.length;
-                    updateMoreButton();
+                    updateMoreButton(elements);
 
                     if (nextFiles.length > 0) {
-                        photoWallGrid.scrollLeft = photoWallGrid.scrollWidth;
+                        elements.photoWallGrid.scrollLeft = elements.photoWallGrid.scrollWidth;
                     }
                 }
 
-                function updateMoreButton() {
-                    morePhotosBtn.style.display = displayedPhotoCount < allPhotos.length ? 'block' : 'none';
+                function updateMoreButton(elements) {
+                    elements.morePhotosBtn.style.display = displayedPhotoCount < allPhotos.length ? 'block' : 'none';
                 }
 
                 function initializeApp(elements) {
@@ -1001,7 +1018,7 @@
                             tokenClient = google.accounts.oauth2.initTokenClient({
                                 client_id: CLIENT_ID,
                                 scope: SCOPES,
-                                callback: handleAuthResponse
+                                callback: (response) => handleAuthResponse(response, elements)
                             });
                             
                             log('身份驗證客戶端初始化成功');
@@ -1009,7 +1026,7 @@
                             showMessage('初始化完成，請登入 Google 帳號', 'info');
                             
                             bindEvents(elements);
-                            loadPhotoWall();
+                            loadPhotoWall(elements);
                         } catch (error) {
                             log(`初始化失敗: ${error.message}`);
                             if (error.details) log(`錯誤詳情: ${error.details}`);
@@ -1019,15 +1036,20 @@
                     });
                 }
 
-                function requestAuth() {
+                function requestAuth(elements) {
                     log('請求 Google 授權...');
                     showMessage('正在連接 Google 帳號...', 'info');
-                    loginBtn.disabled = true;
+                    if (!elements.loginBtn) {
+                        log('錯誤: loginBtn 元素未定義');
+                        showMessage('頁面元素初始化失敗，請重新載入', 'error');
+                        return;
+                    }
+                    elements.loginBtn.disabled = true;
                     
                     if (!tokenClient) {
                         log('錯誤: 身份驗證客戶端未初始化');
                         showMessage('無法連接 Google 身份驗證服務，請稍後重試', 'error');
-                        loginBtn.disabled = false;
+                        elements.loginBtn.disabled = false;
                         return;
                     }
                     
@@ -1045,17 +1067,17 @@
                     } catch (error) {
                         log(`授權請求失敗: ${error.message}`);
                         showMessage(`無法啟動 Google 登入: ${error.message}`, 'error');
-                        loginBtn.disabled = false;
+                        elements.loginBtn.disabled = false;
                     }
                 }
 
-                function handleAuthResponse(response) {
+                function handleAuthResponse(response, elements) {
                     log('收到授權響應');
                     
                     if (response.error !== undefined) {
                         log(`授權錯誤: ${response.error} - ${response.error_description || ''}`);
                         showMessage(`Google 授權失敗: ${response.error}`, 'error');
-                        loginBtn.disabled = false;
+                        elements.loginBtn.disabled = false;
                         return;
                     }
                     
@@ -1063,14 +1085,14 @@
                     isAuthenticated = true;
                     log(`授權成功，獲取令牌`);
                     
-                    loginBtn.textContent = translations[localStorage.getItem('language') || 'zh-TW'].login_button.replace('1. ', '✓ ');
-                    loginBtn.style.background = '#34a853';
-                    uploadArea.style.display = 'block';
+                    elements.loginBtn.textContent = translations[localStorage.getItem('language') || 'zh-TW'].login_button.replace('1. ', '✓ ');
+                    elements.loginBtn.style.background = '#34a853';
+                    elements.uploadArea.style.display = 'block';
                     
                     showMessage('Google 帳號連接成功！現在可以上傳照片、影片或留言。', 'success');
                 }
 
-                function handleFileSelection(event, type) {
+                function handleFileSelection(event, type, elements) {
                     const files = event.target.files;
                     log(`已選擇 ${files.length} 個${type === 'photo' ? '照片' : '影片'}`);
                     
@@ -1089,7 +1111,7 @@
                         selectedFiles.push({ file, type });
                     });
                     
-                    previewFiles();
+                    previewFiles(elements);
                     
                     let totalSize = 0;
                     let largeFiles = [];
@@ -1126,7 +1148,7 @@
                     }
                 }
 
-                async function uploadFiles(items, message) {
+                async function uploadFiles(items, message, elements) {
                     clearMessages();
                     const username = document.getElementById('username').value.trim();
                     
@@ -1274,20 +1296,20 @@
                         
                         log('所有檔案上傳完畢');
                         showMessage(`${photos.length}個照片，${videos.length}個影片${message ? '和留言' : ''}上傳完畢，謝謝您的分享！`, 'success');
-                        previewArea.innerHTML = '';
+                        elements.previewArea.innerHTML = '';
                         selectedFiles = [];
-                        messageInput.value = '';
-                        charCount.textContent = '0/500 字';
-                        confirmUploadBtn.style.display = 'none';
+                        elements.messageInput.value = '';
+                        elements.charCount.textContent = '0/500 字';
+                        elements.confirmUploadBtn.style.display = 'none';
                         mediaURLs.forEach(url => URL.revokeObjectURL(url));
                         mediaURLs = [];
-                        photoInput.value = '';
-                        videoInput.value = '';
+                        elements.photoInput.value = '';
+                        elements.videoInput.value = '';
                         log('上傳完成，重置輸入框');
                         
                         setTimeout(() => {
                             log('延遲後重新載入照片牆');
-                            loadPhotoWall();
+                            loadPhotoWall(elements);
                         }, 2000);
                     } catch (error) {
                         log(`上傳錯誤: ${error.message}`);
@@ -1299,8 +1321,11 @@
                 applyLanguage(savedLang);
                 showMessage('正在初始化...', 'info');
 
-                const elements = initializeElements();
-                if (!elements) return;
+                elements = initializeElements();
+                if (!elements) {
+                    log('初始化中止，因 DOM 元素缺失');
+                    return;
+                }
 
                 elements.loginBtn.disabled = true;
 
