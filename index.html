@@ -120,10 +120,11 @@
         }
         .status-message.success .heart-bubble {
             position: absolute;
+            bottom: 0; /* 從格子最底部開始 */
             font-size: 16px;
-            color: #ff4d4d; /* 愛心顏色 */
+            color: #ff4d4d; /* 花朵顏色 */
             opacity: 0;
-            animation: floatUp 4s ease-out forwards; /* 延長至 4 秒 */
+            animation: floatUp 4s ease-out forwards; /* 4 秒浮動 */
         }
         @keyframes floatUp {
             0% {
@@ -135,7 +136,7 @@
             }
             100% {
                 opacity: 0;
-                transform: translateY(-50px) scale(1.5);
+                transform: translateY(-70px) scale(1.5); /* 調整浮動高度以匹配新起點 */
             }
         }
         .error { 
@@ -168,6 +169,7 @@
         }
         .progress-container {
             width: 100%;
+            position: relative;
             background: #f0f0f0;
             border-radius: 4px;
             margin: 10px 0;
@@ -177,7 +179,19 @@
             width: 0%;
             height: 20px;
             background: #4285f4;
-            transition: width 0.3s ease-in-out;
+            transition: width 0.5s ease-in-out; /* 平滑過渡 */
+        }
+        .progress-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #333;
         }
         .file-info {
             font-size: 12px;
@@ -578,7 +592,7 @@
 
         const translations = {
             'zh-TW': {
-                title: '🤵🏻Tim & Lena的👰<br>婚禮日！',
+                title: '🤵🏻Tim & Lena👰<br>✨婚禮日✨',
                 welcome_message: '歡迎大家上傳想要和我們分享的照片或影片🎞️<br>也可以留下祝福或留言，與我們分享您的喜悅💌<br>把我們婚禮上歡樂的點滴都留存起來吧💖<br><br>✨上傳步驟：<br>Step1. 輸入您的姓名<br>Step2. 登入您的Google帳號<br>Step3. 分享照片、影片或祝福，捕捉每個感動瞬間✨',
                 username_label: '親友姓名：',
                 username_placeholder: '輸入您的姓名',
@@ -597,7 +611,7 @@
                 upload_success_message: '上傳完畢，謝謝您的分享！'
             },
             'en': {
-                title: '🤵🏻Tim & Lena\'s👰<br>Wedding Day!',
+                title: '🤵🏻Tim & Lena👰<br>✨Wedding Day✨',
                 welcome_message: 'Welcome to upload photos or videos you\'d like to share with us 🎞️<br>You can also leave blessings or messages to share your joy 💌<br>Let\'s preserve the joyful moments of our wedding 💖<br><br>✨Upload Steps:<br>Step 1. Enter your name<br>Step 2. Sign in with your Google account<br>Step 3. Share photos, videos, or blessings to capture every touching moment ✨',
                 username_label: 'Friend\'s Name:',
                 username_placeholder: 'Enter your name',
@@ -709,9 +723,9 @@
                 const messageDiv = document.createElement('div');
                 if (progress !== null) {
                     messageDiv.className = 'progress-container';
-                    messageDiv.innerHTML = 
-                        `<div class="progress-bar" style="width: ${progress}%"></div>`;
-                    // 僅在進度條顯示時滾動到狀態區域
+                    messageDiv.innerHTML = `
+                        <div class="progress-bar" style="width: ${progress}%"></div>
+                        <div class="progress-text">${Math.round(progress)}%</div>`;
                     uploadStatus.innerHTML = '';
                     uploadStatus.appendChild(messageDiv);
                     uploadStatus.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -720,7 +734,6 @@
                     messageDiv.textContent = message;
                     uploadStatus.innerHTML = '';
                     uploadStatus.appendChild(messageDiv);
-                    // 不自動滾動，保持當前視口位置
                     if (type === 'success') {
                         createHeartBubbles(messageDiv);
                     }
@@ -732,7 +745,7 @@
                 for (let i = 0; i < bubbleCount; i++) {
                     const heart = document.createElement('span');
                     heart.className = 'heart-bubble';
-                    heart.innerHTML = '🌸'; // 改為花朵符號
+                    heart.innerHTML = '🌸'; // 花朵符號
                     heart.style.left = `${Math.random() * 80 + 10}%`; // 隨機水平位置 (10% 到 90%)
                     heart.style.animationDelay = `${i * 0.2}s`; // 延遲啟動
                     messageDiv.appendChild(heart);
@@ -1204,11 +1217,23 @@
                     const videos = items.filter(item => item.type === 'video');
                     
                     let completedFiles = 0;
+                    let currentProgress = 0;
+
                     const updateProgress = () => {
                         completedFiles++;
-                        const progress = (completedFiles / totalFiles) * 100;
-                        showMessage(null, 'info', progress);
-                        log(`進度更新: ${completedFiles}/${totalFiles} (${progress.toFixed(2)}%)`);
+                        const targetProgress = (completedFiles / totalFiles) * 100;
+                        // 模擬平滑過渡
+                        const step = 0.5; // 每次增加 0.5%
+                        const interval = setInterval(() => {
+                            if (currentProgress < targetProgress) {
+                                currentProgress += step;
+                                if (currentProgress > targetProgress) currentProgress = targetProgress;
+                                showMessage(null, 'info', currentProgress);
+                            } else {
+                                clearInterval(interval);
+                            }
+                        }, 10); // 每 10ms 更新一次
+                        log(`進度更新: ${completedFiles}/${totalFiles} (${targetProgress.toFixed(2)}%)`);
                     };
                     
                     if (photos.length > 0) {
