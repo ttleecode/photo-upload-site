@@ -801,7 +801,7 @@
                     const photoItem = document.createElement('div');
                     photoItem.className = 'photo-wall-item';
                     const img = document.createElement('img');
-                    img.src = file.thumbnailLink.replace('=s220', '=s400');
+                    img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s400') : `https://drive.google.com/uc?id=${file.id}&export=view`;
                     img.alt = file.name;
                     img.onload = () => log(`照片牆圖片載入成功: ${file.name}`);
                     img.onerror = () => {
@@ -810,7 +810,7 @@
                     };
 
                     const link = document.createElement('a');
-                    link.href = file.webContentLink;
+                    link.href = `https://drive.google.com/uc?id=${file.id}&export=view`;
                     link.setAttribute('data-lightbox', 'photo-wall');
                     link.setAttribute('data-title', file.name);
                     link.appendChild(img);
@@ -912,6 +912,17 @@
                     } else {
                         showMessage('請選擇照片或影片！', 'error');
                     }
+                });
+
+                // Configure Lightbox2 options
+                lightbox.option({
+                    'alwaysShowNavOnTouchDevices': true,
+                    'wrapAround': true,
+                    'showImageNumberLabel': true,
+                    'disableScrolling': true,
+                    'fadeDuration': 300,
+                    'imageFadeDuration': 300,
+                    'resizeDuration': 200
                 });
             }
             
@@ -1098,6 +1109,15 @@
                                 const result = await response.json();
                                 if (response.ok) {
                                     log(`上傳成功: ${fileName} (ID: ${result.id})`);
+                                    // Set public permissions
+                                    await gapi.client.drive.permissions.create({
+                                        fileId: result.id,
+                                        resource: {
+                                            type: 'anyone',
+                                            role: 'reader'
+                                        }
+                                    });
+                                    log(`已設置公開讀取權限: ${fileName}`);
                                     updateProgress();
                                 } else {
                                     log(`上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
@@ -1147,6 +1167,15 @@
                                 const result = await response.json();
                                 if (response.ok) {
                                     log(`上傳成功: ${fileName} (ID: ${result.id})`);
+                                    // Set public permissions
+                                    await gapi.client.drive.permissions.create({
+                                        fileId: result.id,
+                                        resource: {
+                                            type: 'anyone',
+                                            role: 'reader'
+                                        }
+                                    });
+                                    log(`已設置公開讀取權限: ${fileName}`);
                                     updateProgress();
                                 } else {
                                     log(`上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
@@ -1187,6 +1216,15 @@
                             const result = await response.json();
                             if (response.ok) {
                                 log(`留言上傳成功: ${fileName} (ID: ${result.id})`);
+                                // Set public permissions
+                                await gapi.client.drive.permissions.create({
+                                    fileId: result.id,
+                                    resource: {
+                                        type: 'anyone',
+                                        role: 'reader'
+                                    }
+                                });
+                                log(`已設置公開讀取權限: ${fileName}`);
                                 updateProgress();
                             } else {
                                 log(`留言上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
