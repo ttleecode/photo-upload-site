@@ -796,7 +796,7 @@
             }
 
             function loadMorePhotos() {
-                const nextFiles = allPhotos.slice(displayedPhotoCount, displayedPhotoCount + 5);
+                const nextFiles = allPhotos.slice(displayedPhotoCount, allPhotos.length); // Load all remaining photos
                 nextFiles.forEach(file => {
                     const photoItem = document.createElement('div');
                     photoItem.className = 'photo-wall-item';
@@ -816,6 +816,8 @@
                     link.setAttribute('data-title', file.name);
                     link.addEventListener('click', (e) => {
                         log(`嘗試載入大圖: ${largeImageUrl}`);
+                        // Store current displayed photos for Lightbox navigation
+                        window.currentDisplayedPhotos = allPhotos.slice(displayedPhotoCount - 5, displayedPhotoCount);
                     });
                     link.appendChild(img);
                     photoItem.appendChild(link);
@@ -823,7 +825,7 @@
                     photoWallGrid.appendChild(photoItem);
                 });
 
-                displayedPhotoCount += nextFiles.length;
+                displayedPhotoCount = allPhotos.length; // Update to total length
                 updateMoreButton();
 
                 if (nextFiles.length > 0) {
@@ -836,7 +838,7 @@
             }
 
             morePhotosBtn.addEventListener('click', () => {
-                log('點擊「更多」按鈕');
+                log('點擊「更多」按鈕，載入所有剩餘照片');
                 loadMorePhotos();
             });
 
@@ -918,7 +920,7 @@
                     }
                 });
 
-                // Configure Lightbox2 options with error handling
+                // Configure Lightbox2 options with navigation handling
                 lightbox.option({
                     'alwaysShowNavOnTouchDevices': true,
                     'wrapAround': true,
@@ -930,6 +932,48 @@
                     'onImageLoadError': function (image) {
                         log(`Lightbox2 圖片載入錯誤: ${image.src} - 無法顯示大圖`);
                         showMessage(`圖片 ${image.alt} 載入失敗，請檢查檔案權限或網路連線`, 'error');
+                    },
+                    'onNavigated': function (direction) {
+                        log(`Lightbox2 導航: ${direction}`);
+                        if (!window.currentDisplayedPhotos) return;
+
+                        const currentIndex = allPhotos.findIndex(photo => 
+                            photo.thumbnailLink && photo.thumbnailLink.replace('=s220', '=s1600') === lightbox.getCurrentImage().src);
+                        if (currentIndex === -1) return;
+
+                        const nextStartIndex = displayedPhotoCount;
+                        if (nextStartIndex < allPhotos.length) {
+                            const nextFiles = allPhotos.slice(nextStartIndex, nextStartIndex + 5).filter(
+                                photo => !window.currentDisplayedPhotos.some(p => p.id === photo.id)
+                            );
+                            if (nextFiles.length > 0) {
+                                nextFiles.forEach(file => {
+                                    const photoItem = document.createElement('div');
+                                    photoItem.className = 'photo-wall-item';
+                                    const img = document.createElement('img');
+                                    img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s400') : `https://drive.google.com/uc?id=${file.id}&export=view`;
+                                    img.alt = file.name;
+                                    img.onload = () => log(`照片牆圖片載入成功: ${file.name}`);
+                                    img.onerror = () => {
+                                        log(`照片牆圖片載入失敗: ${file.name}`);
+                                        photoItem.innerHTML = '<div class="preview-fallback">圖片無法載入</div>';
+                                    };
+
+                                    const link = document.createElement('a');
+                                    const largeImageUrl = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s1600') : `https://drive.google.com/uc?id=${file.id}&export=view`;
+                                    link.href = largeImageUrl;
+                                    link.setAttribute('data-lightbox', 'photo-wall');
+                                    link.setAttribute('data-title', file.name);
+                                    link.appendChild(img);
+                                    photoItem.appendChild(link);
+
+                                    photoWallGrid.appendChild(photoItem);
+                                });
+                                displayedPhotoCount += nextFiles.length;
+                                updateMoreButton();
+                                log(`自動載入 ${nextFiles.length} 張新照片`);
+                            }
+                        }
                     }
                 });
             }
