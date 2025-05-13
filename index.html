@@ -606,6 +606,10 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            // 頁面載入時滾動到頂部
+            window.scrollTo(0, 0);
+            log('頁面載入，滾動到頂部');
+
             const CLIENT_ID = '1059727961676-mba09jlh8is4qrec86o8osrbd3cgld0l.apps.googleusercontent.com';
             const API_KEY = 'AIzaSyDW8iK2KvaYHHTUw-n5cN6n8AfVMm3Msd8';
             const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
@@ -674,13 +678,17 @@
                     messageDiv.className = 'progress-container';
                     messageDiv.innerHTML = 
                         `<div class="progress-bar" style="width: ${progress}%"></div>`;
+                    // 僅在進度條顯示時滾動到狀態區域
+                    uploadStatus.innerHTML = '';
+                    uploadStatus.appendChild(messageDiv);
+                    uploadStatus.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 } else {
                     messageDiv.className = `status-message ${type}`;
                     messageDiv.textContent = message;
+                    uploadStatus.innerHTML = '';
+                    uploadStatus.appendChild(messageDiv);
+                    // 不自動滾動，保持當前視口位置
                 }
-                uploadStatus.innerHTML = '';
-                uploadStatus.appendChild(messageDiv);
-                window.scrollTo(0, document.body.scrollHeight);
             }
 
             function clearMessages() {
