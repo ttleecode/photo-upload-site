@@ -434,7 +434,6 @@
         <div class="supplement" data-i18n="welcome_message">
             歡迎大家上傳想要和我們分享的照片或影片🎞️<br>
             也可以留下祝福或留言，與我們分享您的喜悅💌<br>
-            上傳內容只有新郎、新娘看的到不用擔心😉<br>
             把我們婚禮上歡樂的點滴都留存起來吧💖<br>
             <br>
             ✨上傳步驟：<br>
@@ -529,7 +528,7 @@
         const translations = {
             'zh-TW': {
                 title: '🤵🏻Tim & Lena的👰<br>婚禮日！',
-                welcome_message: '歡迎大家上傳想要和我們分享的照片或影片🎞️<br>也可以留下祝福或留言，與我們分享您的喜悅💌<br>上傳內容只有新郎、新娘看的到不用擔心😉<br>把我們婚禮上歡樂的點滴都留存起來吧💖<br><br>✨上傳步驟：<br>Step1. 輸入您的姓名<br>Step2. 登入您的Google帳號<br>Step3. 分享照片、影片或祝福，捕捉每個感動瞬間✨',
+                welcome_message: '歡迎大家上傳想要和我們分享的照片或影片🎞️<br>也可以留下祝福或留言，與我們分享您的喜悅💌<br>把我們婚禮上歡樂的點滴都留存起來吧💖<br><br>✨上傳步驟：<br>Step1. 輸入您的姓名<br>Step2. 登入您的Google帳號<br>Step3. 分享照片、影片或祝福，捕捉每個感動瞬間✨',
                 username_label: '親友姓名：',
                 username_placeholder: '輸入您的姓名',
                 login_button: '1. 登入 Google 帳號',
@@ -547,7 +546,7 @@
             },
             'en': {
                 title: '🤵🏻Tim & Lena\'s👰<br>Wedding Day!',
-                welcome_message: 'Welcome to upload photos or videos you\'d like to share with us 🎞️<br>You can also leave blessings or messages to share your joy 💌<br>Uploaded content is only visible to the bride and groom, so don\'t worry 😉<br>Let\'s preserve the joyful moments of our wedding 💖<br><br>✨Upload Steps:<br>Step 1. Enter your name<br>Step 2. Sign in with your Google account<br>Step 3. Share photos, videos, or blessings to capture every touching moment ✨',
+                welcome_message: 'Welcome to upload photos or videos you\'d like to share with us 🎞️<br>You can also leave blessings or messages to share your joy 💌<br>Let\'s preserve the joyful moments of our wedding 💖<br><br>✨Upload Steps:<br>Step 1. Enter your name<br>Step 2. Sign in with your Google account<br>Step 3. Share photos, videos, or blessings to capture every touching moment ✨',
                 username_label: 'Friend\'s Name:',
                 username_placeholder: 'Enter your name',
                 login_button: '1. Sign in with Google',
@@ -784,6 +783,7 @@
 
                     loadMorePhotos();
                     updateMoreButton();
+                    photoWallGrid.scrollLeft = 0; // Scroll to the leftmost side after loading
                 } catch (error) {
                     log(`載入照片牆失敗: ${error.message}`);
                     if (error.details) {
@@ -913,10 +913,13 @@
                     handleFileSelection(e, 'video');
                 });
                 confirmUploadBtn.addEventListener('click', () => {
+                    if (confirmUploadBtn.disabled) return; // Prevent multiple clicks
+                    confirmUploadBtn.disabled = true; // Disable button after first click
                     if (selectedFiles.length > 0) {
                         uploadFiles(selectedFiles, messageInput.value.trim());
                     } else {
                         showMessage('請選擇照片或影片！', 'error');
+                        confirmUploadBtn.disabled = false; // Re-enable if no files
                     }
                 });
 
@@ -1100,6 +1103,7 @@
                 
                 if (!username) {
                     showMessage('請輸入姓名！', 'error');
+                    confirmUploadBtn.disabled = false; // Re-enable if username is missing
                     return;
                 }
                 
@@ -1308,6 +1312,7 @@
                 } catch (error) {
                     log(`上傳過程錯誤: ${error.message}`);
                     showMessage(`上傳錯誤: ${error.message}`, 'error');
+                    confirmUploadBtn.disabled = false; // Re-enable on error
                 }
             }
             
