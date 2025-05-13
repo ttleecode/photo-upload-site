@@ -347,6 +347,15 @@
         .language-option:hover {
             background: #f0f0f0;
         }
+        /* 頁腳樣式 */
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+        }
         /* 手機版縮小樣式 */
         @media (max-width: 600px) {
             body {
@@ -414,6 +423,10 @@
             .language-option {
                 font-size: 12px;
                 padding: 8px 16px;
+            }
+            footer {
+                font-size: 10px;
+                padding: 15px;
             }
         }
     </style>
@@ -492,6 +505,11 @@
     <span class="toggle-debug" onclick="toggleDebug()">顯示/隱藏調試信息</span>
     <div id="debug"></div>
 
+    <!-- 頁腳 -->
+    <footer>
+        <p>© 2025 Designed by Tim Lee</p>
+    </footer>
+
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
@@ -542,7 +560,8 @@
                 confirm_upload_button: '確認上傳',
                 photo_wall_title: '💖 婚禮回憶照片牆 💖',
                 photo_wall_message: '看看大家分享的美好時刻！快來上傳你的照片吧！',
-                more_photos_button: '更多'
+                more_photos_button: '更多',
+                upload_success_message: '上傳完畢，謝謝您的分享！'
             },
             'en': {
                 title: '🤵🏻Tim & Lena\'s👰<br>Wedding Day!',
@@ -560,7 +579,8 @@
                 confirm_upload_button: 'Confirm Upload',
                 photo_wall_title: '💖 Wedding Memory Photo Wall 💖',
                 photo_wall_message: 'Check out the beautiful moments shared by everyone! Upload your photos now!',
-                more_photos_button: 'More'
+                more_photos_button: 'More',
+                upload_success_message: 'Thank you for sharing!'
             }
         };
 
@@ -867,7 +887,7 @@
                         
                         if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
                             log('錯誤: Google Identity Services 未正確載入');
-                            showMessage('Google Identity Services 未正確載入，請檢查網路或稍後重試', 'error');
+                            showMessage('Google Identity Services 未正確載入，請檢查網路或稍後再試', 'error');
                             loginBtn.disabled = false;
                             return;
                         }
@@ -994,7 +1014,7 @@
                 
                 if (!tokenClient) {
                     log('錯誤: 身份驗證客戶端未初始化');
-                    showMessage('無法連接 Google 身份驗證服務，請稍後重試', 'error');
+                    showMessage('無法連接 Google 身份驗證服務，請稍後再試', 'error');
                     loginBtn.disabled = false;
                     return;
                 }
@@ -1300,7 +1320,9 @@
                     }
                     
                     log('所有文件上傳完畢');
-                    showMessage(`${photos.length}個照片，${videos.length}個影片${message ? '和留言' : ''}上傳完畢，謝謝您的分享！`, 'success');
+                    const currentLang = localStorage.getItem('language') || 'zh-TW';
+                    const successMessage = translations[currentLang].upload_success_message;
+                    showMessage(`${photos.length}個照片，${videos.length}個影片${message ? '和留言' : ''}${successMessage}`, 'success');
                     previewArea.innerHTML = '';
                     selectedFiles = [];
                     messageInput.value = '';
