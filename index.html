@@ -491,16 +491,16 @@
                 </div>
             </div>
         </div>
-        <h1 data-i18n="title">🤵🏻Tim & Lena's👰<br>Wedding Day！</h1>
+        <h1 data-i18n="title">🤵🏻Tim & Lena👰<br>✨婚禮日✨</h1>
         <div class="supplement" data-i18n="welcome_message">
             歡迎大家上傳想要和我們分享的照片或影片🎞️<br>
             也可以留下祝福或留言，與我們分享您的喜悅💌<br>
             把我們婚禮上歡樂的點滴都留存起來吧💖<br>
             <br>
-            ✨上傳步驟：<br>
+            ✨上傳步驟✨<br>
             Step1. 輸入您的姓名<br>
             Step2. 登入您的Google帳號<br>
-            Step3. 分享照片、影片或祝福，捕捉每個感動瞬間✨
+            Step3. 分享照片、影片或祝福，捕捉每個感動瞬間！
         </div>
     </div>
 
@@ -977,7 +977,7 @@
                         if (error.details) {
                             log(`錯誤詳情: ${error.details}`);
                         }
-                        showMessage(`初始化 Google API 失敗: ${error.message}. 請檢查網路連線或稍後重試。`, 'error');
+                        showMessage(`初始化 Google API 失敗: ${error.message}. 請檢查網路連線或稍後再試。`, 'error');
                         loginBtn.disabled = false;
                     }
                 });
@@ -1231,6 +1231,13 @@
                                 showMessage(null, 'info', currentProgress);
                             } else {
                                 clearInterval(interval);
+                                // 當所有檔案上傳完成時，顯示成功訊息
+                                if (completedFiles === totalFiles) {
+                                    const currentLang = localStorage.getItem('language') || 'zh-TW';
+                                    const successMessage = `${photos.length}個照片，${videos.length}個影片${message ? '和留言' : ''}${translations[currentLang].upload_success_message}`;
+                                    showMessage(successMessage, 'success');
+                                    log('所有文件上傳完畢，顯示成功訊息並觸發動畫');
+                                }
                             }
                         }, 10); // 每 10ms 更新一次
                         log(`進度更新: ${completedFiles}/${totalFiles} (${targetProgress.toFixed(2)}%)`);
@@ -1400,10 +1407,7 @@
                         }
                     }
                     
-                    log('所有文件上傳完畢');
-                    const currentLang = localStorage.getItem('language') || 'zh-TW';
-                    const successMessage = `${photos.length}個照片，${videos.length}個影片${message ? '和留言' : ''}${translations[currentLang].upload_success_message}`;
-                    showMessage(successMessage, 'success');
+                    log('所有文件上傳流程完成');
                     previewArea.innerHTML = '';
                     selectedFiles = [];
                     messageInput.value = '';
