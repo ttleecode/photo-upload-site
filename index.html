@@ -123,7 +123,7 @@
             font-size: 16px;
             color: #ff4d4d; /* 愛心顏色 */
             opacity: 0;
-            animation: floatUp 1.5s ease-out forwards;
+            animation: floatUp 4s ease-out forwards; /* 延長至 4 秒 */
         }
         @keyframes floatUp {
             0% {
@@ -728,13 +728,13 @@
             }
 
             function createHeartBubbles(messageDiv) {
-                const bubbleCount = 3; // 產生 3 個愛心
+                const bubbleCount = 3; // 產生 3 個符號
                 for (let i = 0; i < bubbleCount; i++) {
                     const heart = document.createElement('span');
                     heart.className = 'heart-bubble';
-                    heart.innerHTML = '💖'; // 使用愛心符號
+                    heart.innerHTML = '🌸'; // 改為花朵符號
                     heart.style.left = `${Math.random() * 80 + 10}%`; // 隨機水平位置 (10% 到 90%)
-                    heart.style.animationDelay = `${i * 0.2}s`; // 延遲啟動，避免同時出現
+                    heart.style.animationDelay = `${i * 0.2}s`; // 延遲啟動
                     messageDiv.appendChild(heart);
                 }
             }
