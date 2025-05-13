@@ -810,9 +810,13 @@
                     };
 
                     const link = document.createElement('a');
-                    link.href = `https://drive.google.com/uc?id=${file.id}&export=view`;
+                    const largeImageUrl = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s1600') : `https://drive.google.com/uc?id=${file.id}&export=view`;
+                    link.href = largeImageUrl;
                     link.setAttribute('data-lightbox', 'photo-wall');
                     link.setAttribute('data-title', file.name);
+                    link.addEventListener('click', (e) => {
+                        log(`嘗試載入大圖: ${largeImageUrl}`);
+                    });
                     link.appendChild(img);
                     photoItem.appendChild(link);
 
@@ -914,7 +918,7 @@
                     }
                 });
 
-                // Configure Lightbox2 options
+                // Configure Lightbox2 options with error handling
                 lightbox.option({
                     'alwaysShowNavOnTouchDevices': true,
                     'wrapAround': true,
@@ -922,7 +926,11 @@
                     'disableScrolling': true,
                     'fadeDuration': 300,
                     'imageFadeDuration': 300,
-                    'resizeDuration': 200
+                    'resizeDuration': 200,
+                    'onImageLoadError': function (image) {
+                        log(`Lightbox2 圖片載入錯誤: ${image.src} - 無法顯示大圖`);
+                        showMessage(`圖片 ${image.alt} 載入失敗，請檢查檔案權限或網路連線`, 'error');
+                    }
                 });
             }
             
