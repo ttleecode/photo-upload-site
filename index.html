@@ -305,14 +305,33 @@
             align-items: center;
             min-height: 100px;
         }
+        /* 語系選擇樣式 */
+        .language-select {
+            width: 100%;
+            max-width: 200px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            color: #333;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            text-align: center;
+            margin: 10px auto;
+        }
+        .language-select:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
     </style>
 </head>
 <body>
     <div class="section" id="topPhotoArea">
         <img src="/images/chinese_style2.png" alt="Wedding Decoration" class="header-image">
-        <h1>🤵🏻Tim & Lena's👰<br>
-            Wedding Day！</h1>
-        <div class="supplement">
+        <h1 data-i18n="title">🤵🏻Tim & Lena's👰<br>Wedding Day！</h1>
+        <div class="supplement" data-i18n="welcome_message">
             歡迎大家上傳想要和我們分享的照片或影片🎞️<br>
             也可以留下祝福或留言，與我們分享您的喜悅💌<br>
             上傳內容只有新郎、新娘看的到不用擔心😉<br>
@@ -325,14 +344,22 @@
         </div>
     </div>
 
+    <div class="section" id="languageSelectArea">
+        <select id="languageSelect" class="language-select">
+            <option value="zh-TW">繁體中文</option>
+            <option value="en">English</option>
+        </select>
+    </div>
+
     <div class="section" id="usernameArea">
-        <label for="username">親友姓名：</label>
-        <input type="text" id="username" placeholder="輸入您的姓名" required>
+        <label for="username" data-i18n="username_label">親友姓名：</label>
+        <input type="text" id="username" placeholder="輸入您的姓名" data-i18n-placeholder="username_placeholder" required>
     </div>
 
     <div class="section" id="authArea">
-        <button id="loginBtn" class="btn">1. 登入 Google 帳號</button>
-        <div class="supplement warning">
+        <button id="loginBtn" class="btn" data-i18n="login_button">1. 登入 Google 帳號</button>
+        <div class="supplement warning" data-i18n="auth_warning">
+            ✨若忘記Google帳號or密碼，隨時跟新人們用Line等方式連絡傳遞吧✨<br>
             ✨若看到「未驗證」警告，請點擊「進階」並「繼續」以完成登入✨<br>
         </div>
     </div>
@@ -341,46 +368,42 @@
         <input type="file" id="photoInput" accept="image/*" multiple style="display: none;">
         <input type="file" id="videoInput" accept="video/*" multiple style="display: none;">
         
-        <button id="photoBtn" class="btn upload-btn">📸選擇照片📸</button>
-        <button id="videoBtn" class="btn upload-btn">🎥選擇影片🎥</button>
+        <button id="photoBtn" class="btn upload-btn" data-i18n="photo_button">📸選擇照片📸</button>
+        <button id="videoBtn" class="btn upload-btn" data-i18n="video_button">🎥選擇影片🎥</button>
         
         <div id="previewArea"></div>
         
-        <div class="file-info">支援的照片格式: JPG, PNG, GIF 等</div>
-        <div class="file-info">支援的影片格式: MP4, MOV, AVI 等 (建議大小小於 1GB)</div>
+        <div class="file-info" data-i18n="file_info_photo">支援的照片格式: JPG, PNG, GIF 等</div>
+        <div class="file-info" data-i18n="file_info_video">支援的影片格式: MP4, MOV, AVI 等 (建議大小小於 1GB)</div>
         
         <div class="message-section">
-            <label for="messageInput">留言或祝福（可選填，將與檔案一起上傳）：</label>
-            <textarea id="messageInput" placeholder="寫下您的祝福或想說的話..." maxlength="500"></textarea>
+            <label for="messageInput" data-i18n="message_label">留言或祝福（可選填，將與檔案一起上傳）：</label>
+            <textarea id="messageInput" placeholder="寫下您的祝福或想說的話..." data-i18n-placeholder="message_placeholder" maxlength="500"></textarea>
             <div id="charCount" class="char-count">0/500 字</div>
-            <button id="confirmUploadBtn" class="btn">確認上傳</button>
+            <button id="confirmUploadBtn" class="btn" data-i18n="confirm_upload_button">確認上傳</button>
         </div>
     </div>
 
     <div id="uploadStatus"></div>
 
-    <!-- 照片牆區塊（移到最下方） -->
     <div class="section" id="photoWall">
-        <h2>💖 婚禮回憶照片牆 💖</h2>
-        <div class="supplement">看看大家分享的美好時刻！快來上傳你的照片吧！</div>
+        <h2 data-i18n="photo_wall_title">💖 婚禮回憶照片牆 💖</h2>
+        <div class="supplement" data-i18n="photo_wall_message">看看大家分享的美好時刻！快來上傳你的照片吧！</div>
         <div id="photoWallGrid" class="photo-wall-grid">
             <div class="photo-wall-loading">
                 <span class="loading-indicator"></span> 載入照片中...
             </div>
         </div>
-        <button id="morePhotosBtn" class="btn" style="display: none;">更多</button>
+        <button id="morePhotosBtn" class="btn" style="display: none;" data-i18n="more_photos_button">更多</button>
     </div>
 
     <span class="toggle-debug" onclick="toggleDebug()">顯示/隱藏調試信息</span>
     <div id="debug"></div>
 
     <script src="https://apis.google.com/js/api.js"></script>
-    <!-- 移除直接的 gsi/client 腳本，改用動態載入 -->
-    <!-- 引入 Lightbox2 JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
 
     <script>
-        // 調試函數
         function log(message) {
             const debug = document.getElementById('debug');
             const timestamp = new Date().toLocaleTimeString();
@@ -393,7 +416,6 @@
             debug.style.display = debug.style.display === 'none' ? 'block' : 'none';
         }
 
-        // 動態載入 Google Identity Services
         function loadGoogleIdentityScript(callback) {
             const script = document.createElement('script');
             script.src = 'https://accounts.google.com/gsi/client';
@@ -410,15 +432,73 @@
             document.head.appendChild(script);
         }
 
+        const translations = {
+            'zh-TW': {
+                title: '🤵🏻Tim & Lena的👰<br>婚禮日！',
+                welcome_message: '歡迎大家上傳想要和我們分享的照片或影片🎞️<br>也可以留下祝福或留言，與我們分享您的喜悅💌<br>上傳內容只有新郎、新娘看的到不用擔心😉<br>把我們婚禮上歡樂的點滴都留存起來吧💖<br><br>✨上傳步驟：<br>Step1. 輸入您的姓名<br>Step2. 登入您的Google帳號<br>Step3. 分享照片、影片或祝福，捕捉每個感動瞬間✨',
+                username_label: '親友姓名：',
+                username_placeholder: '輸入您的姓名',
+                login_button: '1. 登入 Google 帳號',
+                auth_warning: '✨若忘記Google帳號or密碼，隨時跟新人們用Line等方式連絡傳遞吧✨<br>✨若看到「未驗證」警告，請點擊「進階」並「繼續」以完成登入✨',
+                photo_button: '📸選擇照片📸',
+                video_button: '🎥選擇影片🎥',
+                file_info_photo: '支援的照片格式: JPG, PNG, GIF 等',
+                file_info_video: '支援的影片格式: MP4, MOV, AVI 等 (建議大小小於 1GB)',
+                message_label: '留言或祝福（可選填，將與檔案一起上傳）：',
+                message_placeholder: '寫下您的祝福或想說的話...',
+                confirm_upload_button: '確認上傳',
+                photo_wall_title: '💖 婚禮回憶照片牆 💖',
+                photo_wall_message: '看看大家分享的美好時刻！快來上傳你的照片吧！',
+                more_photos_button: '更多'
+            },
+            'en': {
+                title: '🤵🏻Tim & Lena\'s👰<br>Wedding Day!',
+                welcome_message: 'Welcome to upload photos or videos you\'d like to share with us 🎞️<br>You can also leave blessings or messages to share your joy 💌<br>Uploaded content is only visible to the bride and groom, so don\'t worry 😉<br>Let\'s preserve the joyful moments of our wedding 💖<br><br>✨Upload Steps:<br>Step 1. Enter your name<br>Step 2. Sign in with your Google account<br>Step 3. Share photos, videos, or blessings to capture every touching moment ✨',
+                username_label: 'Friend\'s Name:',
+                username_placeholder: 'Enter your name',
+                login_button: '1. Sign in with Google',
+                auth_warning: '✨If you forget your Google account or password, contact the couple via Line or other methods anytime ✨<br>✨If you see an "unverified" warning, click "Advanced" and "Continue" to complete the sign-in ✨',
+                photo_button: '📸Select Photos📸',
+                video_button: '🎥Select Videos🎥',
+                file_info_photo: 'Supported photo formats: JPG, PNG, GIF, etc.',
+                file_info_video: 'Supported video formats: MP4, MOV, AVI, etc. (recommended size < 1GB)',
+                message_label: 'Message or Blessing (optional, will be uploaded with files):',
+                message_placeholder: 'Write your blessings or message...',
+                confirm_upload_button: 'Confirm Upload',
+                photo_wall_title: '💖 Wedding Memory Photo Wall 💖',
+                photo_wall_message: 'Check out the beautiful moments shared by everyone! Upload your photos now!',
+                more_photos_button: 'More'
+            }
+        };
+
+        function applyLanguage(lang) {
+            localStorage.setItem('language', lang);
+            log(`應用語系: ${lang}`);
+
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    element.innerHTML = translations[lang][key];
+                }
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                if (translations[lang][key]) {
+                    element.placeholder = translations[lang][key];
+                }
+            });
+
+            document.documentElement.lang = lang;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            // 設定
             const CLIENT_ID = '1059727961676-mba09jlh8is4qrec86o8osrbd3cgld0l.apps.googleusercontent.com';
             const API_KEY = 'AIzaSyDW8iK2KvaYHHTUw-n5cN6n8AfVMm3Msd8';
             const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
             const SCOPES = 'https://www.googleapis.com/auth/drive.file';
             const FOLDER_ID = '1qnlf5S3Wt1QPJ2WupXcyTnJDm7rUDIrt';
 
-            // 元素
             const loginBtn = document.getElementById('loginBtn');
             const uploadArea = document.getElementById('uploadArea');
             const photoInput = document.getElementById('photoInput');
@@ -432,23 +512,32 @@
             const previewArea = document.getElementById('previewArea');
             const photoWallGrid = document.getElementById('photoWallGrid');
             const morePhotosBtn = document.getElementById('morePhotosBtn');
+            const languageSelect = document.getElementById('languageSelect');
 
             let accessToken = null;
             let tokenClient = null;
             let isAuthenticated = false;
-            let selectedFiles = []; // 儲存 { file: File, type: 'photo'|'video' }
-            let mediaURLs = []; // 儲存臨時 URL 以便清理
-            let allPhotos = []; // 儲存所有照片
-            let displayedPhotoCount = 0; // 已顯示的照片數量
+            let selectedFiles = [];
+            let mediaURLs = [];
+            let allPhotos = [];
+            let displayedPhotoCount = 0;
 
-            // 字數計數
+            const savedLang = localStorage.getItem('language') || 'zh-TW';
+            languageSelect.value = savedLang;
+            applyLanguage(savedLang);
+
+            languageSelect.addEventListener('change', (e) => {
+                const lang = e.target.value;
+                log(`語系變更為: ${lang}`);
+                applyLanguage(lang);
+            });
+
             messageInput.addEventListener('input', () => {
                 const count = messageInput.value.length;
                 charCount.textContent = `${count}/500 字`;
                 charCount.classList.toggle('warning', count > 450);
             });
 
-            // 顯示消息或進度條
             function showMessage(message, type = 'info', progress = null) {
                 const messageDiv = document.createElement('div');
                 if (progress !== null) {
@@ -464,12 +553,10 @@
                 window.scrollTo(0, document.body.scrollHeight);
             }
 
-            // 清除所有消息
             function clearMessages() {
                 uploadStatus.innerHTML = '';
             }
             
-            // 格式化文件大小
             function formatFileSize(bytes) {
                 if (bytes < 1024) return bytes + ' B';
                 else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
@@ -477,7 +564,6 @@
                 else return (bytes / 1073741824).toFixed(2) + ' GB';
             }
             
-            // 顯示檔案預覽
             function previewFiles() {
                 mediaURLs.forEach(url => URL.revokeObjectURL(url));
                 mediaURLs = [];
@@ -545,37 +631,40 @@
                 log('已重置照片和影片輸入框');
             }
 
-            // 載入照片牆
-            async function loadPhotoWall() {
+            function loadPhotoWall() {
                 log('載入照片牆...');
                 photoWallGrid.innerHTML = '<div class="photo-wall-loading"><span class="loading-indicator"></span> 載入照片中...</div>';
 
                 try {
-                    const response = await gapi.client.drive.files.list({
+                    const response = gapi.client.drive.files.list({
                         q: `'${FOLDER_ID}' in parents and mimeType contains 'image/' and properties has { key='isPublic' and value='true' }`,
                         fields: 'files(id, name, webContentLink, thumbnailLink)',
                         pageSize: 20
-                    });
+                    }).then(response => {
+                        const files = response.result.files || [];
+                        log(`找到 ${files.length} 張公開照片`);
+                        log(`檔案列表: ${JSON.stringify(files, null, 2)}`);
 
-                    const files = response.result.files || [];
-                    log(`找到 ${files.length} 張公開照片`);
-                    log(`檔案列表: ${JSON.stringify(files, null, 2)}`);
+                        allPhotos = files;
+                        displayedPhotoCount = 0;
+                        photoWallGrid.innerHTML = '';
 
-                    allPhotos = files; // 儲存所有照片
-                    displayedPhotoCount = 0;
-                    photoWallGrid.innerHTML = '';
+                        if (files.length === 0) {
+                            photoWallGrid.innerHTML = '<div class="photo-wall-empty">目前尚無公開照片，快來上傳吧！</div>';
+                            morePhotosBtn.style.display = 'none';
+                            return;
+                        }
 
-                    if (files.length === 0) {
-                        photoWallGrid.innerHTML = '<div class="photo-wall-empty">目前尚無公開照片，快來上傳吧！</div>';
+                        loadMorePhotos();
+                        updateMoreButton();
+                    }).catch(error => {
+                        log(`載入照片牆失敗: ${error.message}`);
+                        if (error.details) {
+                            log(`錯誤詳情: ${error.details}`);
+                        }
+                        photoWallGrid.innerHTML = '<div class="photo-wall-empty">載入照片失敗，請稍後再試</div>';
                         morePhotosBtn.style.display = 'none';
-                        return;
-                    }
-
-                    // 顯示前 5 張照片
-                    loadMorePhotos();
-
-                    // 顯示「更多」按鈕（如果還有照片可載入）
-                    updateMoreButton();
+                    });
                 } catch (error) {
                     log(`載入照片牆失敗: ${error.message}`);
                     if (error.details) {
@@ -586,7 +675,6 @@
                 }
             }
 
-            // 載入更多照片（每次 5 張）
             function loadMorePhotos() {
                 const nextFiles = allPhotos.slice(displayedPhotoCount, displayedPhotoCount + 5);
                 nextFiles.forEach(file => {
@@ -614,24 +702,20 @@
                 displayedPhotoCount += nextFiles.length;
                 updateMoreButton();
 
-                // 滾動到最新照片
                 if (nextFiles.length > 0) {
                     photoWallGrid.scrollLeft = photoWallGrid.scrollWidth;
                 }
             }
 
-            // 更新「更多」按鈕的可見性
             function updateMoreButton() {
                 morePhotosBtn.style.display = displayedPhotoCount < allPhotos.length ? 'block' : 'none';
             }
 
-            // 為「更多」按鈕添加事件監聽器
             morePhotosBtn.addEventListener('click', () => {
                 log('點擊「更多」按鈕');
                 loadMorePhotos();
             });
 
-            // 步驟1: 初始化API並設置事件監聽器
             function initializeApp() {
                 log('應用初始化中...');
                 showMessage('正在初始化，請稍候...', 'info');
@@ -672,7 +756,6 @@
                     }
                 });
                 
-                // 防止按鈕事件被覆蓋
                 loginBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -705,7 +788,6 @@
                 });
             }
             
-            // 步驟2: 請求授權
             function requestAuth() {
                 log('請求 Google 授權...');
                 showMessage('正在連接 Google 帳號...', 'info');
@@ -736,7 +818,6 @@
                 }
             }
             
-            // 步驟3: 處理授權響應
             function handleAuthResponse(response) {
                 log('收到授權響應: ' + JSON.stringify(response));
                 
@@ -758,7 +839,6 @@
                 showMessage('Google 帳號連接成功！現在可以上傳照片、影片或留言。', 'success');
             }
             
-            // 步驟4: 處理文件選擇
             function handleFileSelection(event, type) {
                 const files = event.target.files;
                 log(`已選擇 ${files.length} 個${type === 'photo' ? '照片' : '影片'}文件`);
@@ -797,7 +877,6 @@
                 log(`總文件大小: ${formatFileSize(totalSize)}`);
             }
             
-            // 步驟5: 獲取下一個文件編號
             async function getNextFileNumber(username, type) {
                 try {
                     log(`查詢用戶 "${username}" 的現有 ${type} 文件`);
@@ -820,7 +899,6 @@
                 }
             }
             
-            // 步驟6: 上傳照片、影片和留言（若有）
             async function uploadFiles(items, message) {
                 clearMessages();
                 const username = document.getElementById('username').value.trim();
@@ -1007,7 +1085,6 @@
                 }
             }
             
-            // 初始化應用
             loginBtn.disabled = true;
             showMessage('正在初始化...', 'info');
             loadGoogleIdentityScript(() => {
