@@ -103,8 +103,6 @@
             font-size: 14px;
             text-align: center;
             position: relative;
-            height: 100px; /* 固定高度以控制花朵上升範圍 */
-            overflow: hidden; /* 防止花朵溢出 */
         }
         .status-message.success {
             color: #155724;
@@ -118,31 +116,6 @@
             }
             100% {
                 background-position: 100% 50%;
-            }
-        }
-        .status-message.success .heart-bubble {
-            position: absolute;
-            bottom: 0; /* 從格子底部開始 */
-            font-size: 16px;
-            color: #ff4d4d; /* 花朵顏色 */
-            opacity: 0;
-            animation: floatUp 4s ease-out forwards; /* 4 秒浮動 */
-        }
-        @keyframes floatUp {
-            0% {
-                opacity: 0;
-                transform: translateY(0) scale(0);
-            }
-            20% {
-                opacity: 1;
-            }
-            80% {
-                opacity: 1;
-                transform: translateY(-90px) scale(1.5); /* 上升到接近頂部 */
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-100px) scale(1.5); /* 頂部時完全淡出 */
             }
         }
         .error { 
@@ -740,21 +713,6 @@
                     messageDiv.textContent = message;
                     uploadStatus.innerHTML = '';
                     uploadStatus.appendChild(messageDiv);
-                    if (type === 'success') {
-                        createHeartBubbles(messageDiv);
-                    }
-                }
-            }
-
-            function createHeartBubbles(messageDiv) {
-                const bubbleCount = 15; // 調整為 15 個花朵
-                for (let i = 0; i < bubbleCount; i++) {
-                    const heart = document.createElement('span');
-                    heart.className = 'heart-bubble';
-                    heart.innerHTML = '🌸'; // 花朵符號
-                    heart.style.left = `${Math.random() * 80 + 10}%`; // 隨機水平位置 (10% 到 90%)
-                    heart.style.animationDelay = `${i * 0.2}s`; // 延遲啟動
-                    messageDiv.appendChild(heart);
                 }
             }
 
@@ -983,7 +941,7 @@
                         if (error.details) {
                             log(`錯誤詳情: ${error.details}`);
                         }
-                        showMessage(`初始化 Google API 失敗: ${error.message}. 請檢查網路連線或稍後重試。`, 'error');
+                        showMessage(`初始化 Google API 失敗: ${error.message}. 請檢查網路連線或稍後再試。`, 'error');
                         loginBtn.disabled = false;
                     }
                 });
@@ -1242,7 +1200,7 @@
                                     const currentLang = localStorage.getItem('language') || 'zh-TW';
                                     const successMessage = `${photos.length}個照片，${videos.length}個影片${message ? '和留言' : ''}${translations[currentLang].upload_success_message}`;
                                     showMessage(successMessage, 'success');
-                                    log('所有文件上傳完畢，顯示成功訊息並觸發動畫');
+                                    log('所有文件上傳完畢，顯示成功訊息');
                                 }
                             }
                         }, 10); // 每 10ms 更新一次
