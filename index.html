@@ -52,7 +52,8 @@
             appearance: none;
         }
         .btn:active {
-            background: #3367d6;
+            transform: scale(0.95); /* 縮放到 95% 大小 */
+            transition: transform 0.1s ease; /* 快速過渡效果 */
         }
         #loginBtn {
             background: #34a853;
@@ -99,8 +100,19 @@
             font-size: 14px;
             text-align: center;
         }
+        .status-message.success {
+            background: linear-gradient(90deg, #d4edda, #a5d6a7); /* 淺綠到深綠 */
+            animation: successGradient 2s ease forwards;
+        }
+        @keyframes successGradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            100% {
+                background-position: 100% 50%;
+            }
+        }
         .success { 
-            background-color: #d4edda; 
             color: #155724; 
             border: 1px solid #c3e6cb;
         }
@@ -464,8 +476,7 @@
     <div class="section" id="authArea">
         <button id="loginBtn" class="btn" data-i18n="login_button">1. 登入 Google 帳號</button>
         <div class="supplement warning" data-i18n="auth_warning">
-            ✨若忘記Google帳號密碼，隨時跟新人們用Line連絡傳遞吧✨<br>
-            ✨若看到「未驗證」警告，請點擊「進階」並「繼續」登入✨<br>
+            ✨若忘記Google帳號密碼，隨時透過Line聯繫我們✨<br>✨若看到「未驗證」警告，請點擊「進階」並「繼續」登入✨<br>
         </div>
     </div>
 
@@ -550,7 +561,7 @@
                 username_label: '親友姓名：',
                 username_placeholder: '輸入您的姓名',
                 login_button: '1. 登入 Google 帳號',
-                auth_warning: '✨若忘記Google帳號密碼，隨時跟新人們用Line連絡傳遞吧✨<br>✨若看到「未驗證」警告，請點擊「進階」並「繼續」登入✨<br>',
+                auth_warning: '✨若忘記Google帳號密碼，隨時透過Line聯繫我們✨<br>✨若看到「未驗證」警告，請點擊「進階」並「繼續」登入✨<br>',
                 photo_button: '📸選擇照片📸',
                 video_button: '🎥選擇影片🎥',
                 file_info_photo: '支援的照片格式: JPG, PNG, GIF 等',
@@ -569,7 +580,7 @@
                 username_label: 'Friend\'s Name:',
                 username_placeholder: 'Enter your name',
                 login_button: '1. Sign in with Google',
-                auth_warning: '✨If you forget your Google account password, contact us via Line anytime✨<br>✨If you see "unverified" warning, click "Advanced" and "Continue" to sign in✨<br>',
+                auth_warning: '✨If you forget your Google account password, contact us via Line anytime✨<br>✨If you see an "unverified" warning, click "Advanced" and "Continue" to sign in✨<br>',
                 photo_button: '📸Select Photos📸',
                 video_button: '🎥Select Videos🎥',
                 file_info_photo: 'Supported photo formats: JPG, PNG, GIF, etc.',
