@@ -259,7 +259,6 @@
         .char-count.warning {
             color: #856404;
         }
-        /* 照片牆樣式 */
         #photoWall {
             margin: 20px 0;
         }
@@ -271,10 +270,10 @@
             margin-top: 10px;
             padding-bottom: 10px;
             scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch; /* 行動裝置平滑滾動 */
+            -webkit-overflow-scrolling: touch;
         }
         .photo-wall-item {
-            flex: 0 0 120px; /* 固定寬度 */
+            flex: 0 0 120px;
             height: 120px;
             overflow: hidden;
             border-radius: 4px;
@@ -305,31 +304,131 @@
             align-items: center;
             min-height: 100px;
         }
-        /* 語系選擇樣式 */
-        .language-select {
-            width: 100%;
-            max-width: 200px;
-            padding: 10px;
-            font-size: 16px;
+        /* 語系選擇新樣式 */
+        .language-selector {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+        .language-icon {
+            font-size: 24px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            padding: 5px;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .language-dropdown {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 0;
+            background: #fff;
             border: 1px solid #ccc;
             border-radius: 4px;
-            background: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+        }
+        .language-dropdown.show {
+            display: block;
+        }
+        .language-option {
+            padding: 10px 20px;
+            font-size: 14px;
             color: #333;
             cursor: pointer;
-            -webkit-appearance: none;
-            appearance: none;
-            text-align: center;
-            margin: 10px auto;
+            text-align: left;
         }
-        .language-select:focus {
-            outline: none;
-            border-color: #4285f4;
+        .language-option:hover {
+            background: #f0f0f0;
+        }
+        /* 手機版縮小樣式 */
+        @media (max-width: 600px) {
+            body {
+                margin: 15px auto;
+                font-size: 14px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            h2 {
+                font-size: 18px;
+            }
+            .section {
+                margin-bottom: 15px;
+            }
+            .btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+            #morePhotosBtn {
+                width: 100px;
+                font-size: 14px;
+            }
+            .supplement {
+                font-size: 12px;
+                line-height: 1.4;
+            }
+            .status-message {
+                font-size: 12px;
+                padding: 8px;
+            }
+            .file-info {
+                font-size: 10px;
+            }
+            #username, #messageInput {
+                padding: 8px;
+                font-size: 14px;
+            }
+            .preview-item {
+                width: 80px;
+                height: 80px;
+            }
+            .photo-wall-item {
+                flex: 0 0 100px;
+                height: 100px;
+            }
+            .photo-wall-empty {
+                font-size: 12px;
+                min-height: 80px;
+            }
+            .message-section {
+                padding: 8px;
+                margin-top: 15px;
+            }
+            .char-count {
+                font-size: 10px;
+            }
+            .language-icon {
+                font-size: 20px;
+                width: 30px;
+                height: 30px;
+                padding: 4px;
+            }
+            .language-option {
+                font-size: 12px;
+                padding: 8px 16px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="section" id="topPhotoArea">
-        <img src="/images/chinese_style2.png" alt="Wedding Decoration" class="header-image">
+        <div style="position: relative;">
+            <img src="/images/chinese_style2.png" alt="Wedding Decoration" class="header-image">
+            <div class="language-selector">
+                <div class="language-icon" id="languageIcon">🌐</div>
+                <div class="language-dropdown" id="languageDropdown">
+                    <div class="language-option" data-lang="zh-TW">繁體中文</div>
+                    <div class="language-option" data-lang="en">English</div>
+                </div>
+            </div>
+        </div>
         <h1 data-i18n="title">🤵🏻Tim & Lena's👰<br>Wedding Day！</h1>
         <div class="supplement" data-i18n="welcome_message">
             歡迎大家上傳想要和我們分享的照片或影片🎞️<br>
@@ -344,13 +443,6 @@
         </div>
     </div>
 
-    <div class="section" id="languageSelectArea">
-        <select id="languageSelect" class="language-select">
-            <option value="zh-TW">繁體中文</option>
-            <option value="en">English</option>
-        </select>
-    </div>
-
     <div class="section" id="usernameArea">
         <label for="username" data-i18n="username_label">親友姓名：</label>
         <input type="text" id="username" placeholder="輸入您的姓名" data-i18n-placeholder="username_placeholder" required>
@@ -359,8 +451,8 @@
     <div class="section" id="authArea">
         <button id="loginBtn" class="btn" data-i18n="login_button">1. 登入 Google 帳號</button>
         <div class="supplement warning" data-i18n="auth_warning">
-            ✨若忘記Google帳號or密碼，隨時跟新人們用Line等方式連絡傳遞吧✨<br>
-            ✨若看到「未驗證」警告，請點擊「進階」並「繼續」以完成登入✨<br>
+            ✨若忘記Google帳號密碼，隨時跟新人們用Line連絡傳遞吧✨<br>
+            ✨若看到「未驗證」警告，請點擊「進階」並「繼續」登入✨<br>
         </div>
     </div>
 
@@ -435,11 +527,11 @@
         const translations = {
             'zh-TW': {
                 title: '🤵🏻Tim & Lena的👰<br>婚禮日！',
-                welcome_message: '歡迎大家上傳想要和我們分享的照片或影片🎞️<br>也可以留下祝福或留言，與我們分享您的喜悅💌<br>把我們婚禮上歡樂的點滴都留存起來吧💖<br><br>✨上傳步驟：<br>Step1. 輸入您的姓名<br>Step2. 登入您的Google帳號<br>Step3. 分享照片、影片或祝福，捕捉每個感動瞬間✨',
+                welcome_message: '歡迎大家上傳想要和我們分享的照片或影片🎞️<br>也可以留下祝福或留言，與我們分享您的喜悅💌<br>上傳內容只有新郎、新娘看的到不用擔心😉<br>把我們婚禮上歡樂的點滴都留存起來吧💖<br><br>✨上傳步驟：<br>Step1. 輸入您的姓名<br>Step2. 登入您的Google帳號<br>Step3. 分享照片、影片或祝福，捕捉每個感動瞬間✨',
                 username_label: '親友姓名：',
                 username_placeholder: '輸入您的姓名',
                 login_button: '1. 登入 Google 帳號',
-                auth_warning: '✨若忘記Google帳號or密碼，隨時跟新人們用Line等方式連絡傳遞吧✨<br>✨若看到「未驗證」警告，請點擊「進階」並「繼續」以完成登入✨',
+                auth_warning: '✨若忘記Google帳號密碼，隨時跟新人們用Line連絡傳遞吧✨<br>✨若看到「未驗證」警告，請點擊「進階」並「繼續」登入✨<br>',
                 photo_button: '📸選擇照片📸',
                 video_button: '🎥選擇影片🎥',
                 file_info_photo: '支援的照片格式: JPG, PNG, GIF 等',
@@ -453,17 +545,17 @@
             },
             'en': {
                 title: '🤵🏻Tim & Lena\'s👰<br>Wedding Day!',
-                welcome_message: 'Welcome to upload photos or videos you\'d like to share with us 🎞️<br>You can also leave blessings or messages to share your joy 💌<br>Let\'s preserve the joyful moments of our wedding 💖<br><br>✨Upload Steps:<br>Step 1. Enter your name<br>Step 2. Sign in with your Google account<br>Step 3. Share photos, videos, or blessings to capture every touching moment ✨',
-                username_label: 'Friend & Relative\'s Name:',
+                welcome_message: 'Welcome to upload photos or videos you\'d like to share with us 🎞️<br>You can also leave blessings or messages to share your joy 💌<br>Uploaded content is only visible to the bride and groom, so don\'t worry 😉<br>Let\'s preserve the joyful moments of our wedding 💖<br><br>✨Upload Steps:<br>Step 1. Enter your name<br>Step 2. Sign in with your Google account<br>Step 3. Share photos, videos, or blessings to capture every touching moment ✨',
+                username_label: 'Friend\'s Name:',
                 username_placeholder: 'Enter your name',
                 login_button: '1. Sign in with Google',
-                auth_warning: '✨If you forget your Google account, contact the couple via Line or other methods anytime ✨<br>✨If you see "unverified" warning, click "Advanced" and "Continue" to sign-in ✨',
+                auth_warning: '✨If you forget your Google account password, contact the couple via Line anytime ✨<br>✨If you see an "unverified" warning, click "Advanced" and "Continue" to sign in ✨<br>',
                 photo_button: '📸Select Photos📸',
                 video_button: '🎥Select Videos🎥',
                 file_info_photo: 'Supported photo formats: JPG, PNG, GIF, etc.',
                 file_info_video: 'Supported video formats: MP4, MOV, AVI, etc. (recommended size < 1GB)',
                 message_label: 'Message or Blessing (optional, will be uploaded with files):',
-                message_placeholder: 'Write your blessings or message here...',
+                message_placeholder: 'Write your blessings or message...',
                 confirm_upload_button: 'Confirm Upload',
                 photo_wall_title: '💖 Wedding Memory Photo Wall 💖',
                 photo_wall_message: 'Check out the beautiful moments shared by everyone! Upload your photos now!',
@@ -512,7 +604,8 @@
             const previewArea = document.getElementById('previewArea');
             const photoWallGrid = document.getElementById('photoWallGrid');
             const morePhotosBtn = document.getElementById('morePhotosBtn');
-            const languageSelect = document.getElementById('languageSelect');
+            const languageIcon = document.getElementById('languageIcon');
+            const languageDropdown = document.getElementById('languageDropdown');
 
             let accessToken = null;
             let tokenClient = null;
@@ -523,13 +616,29 @@
             let displayedPhotoCount = 0;
 
             const savedLang = localStorage.getItem('language') || 'zh-TW';
-            languageSelect.value = savedLang;
             applyLanguage(savedLang);
 
-            languageSelect.addEventListener('change', (e) => {
-                const lang = e.target.value;
-                log(`語系變更為: ${lang}`);
-                applyLanguage(lang);
+            // 語系選擇下拉選單控制
+            languageIcon.addEventListener('click', (e) => {
+                e.stopPropagation();
+                languageDropdown.classList.toggle('show');
+                log('語系選單切換顯示狀態');
+            });
+
+            document.querySelectorAll('.language-option').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    const lang = e.target.getAttribute('data-lang');
+                    log(`選擇語系: ${lang}`);
+                    applyLanguage(lang);
+                    languageDropdown.classList.remove('show');
+                });
+            });
+
+            // 點擊外部關閉選單
+            document.addEventListener('click', (e) => {
+                if (!languageIcon.contains(e.target) && !languageDropdown.contains(e.target)) {
+                    languageDropdown.classList.remove('show');
+                }
             });
 
             messageInput.addEventListener('input', () => {
@@ -631,40 +740,34 @@
                 log('已重置照片和影片輸入框');
             }
 
-            function loadPhotoWall() {
-                log('載入照片牆...');
+            async function loadPhotoWall() {
+                log('開始載入照片牆...');
                 photoWallGrid.innerHTML = '<div class="photo-wall-loading"><span class="loading-indicator"></span> 載入照片中...</div>';
 
                 try {
-                    const response = gapi.client.drive.files.list({
+                    const response = await gapi.client.drive.files.list({
                         q: `'${FOLDER_ID}' in parents and mimeType contains 'image/' and properties has { key='isPublic' and value='true' }`,
                         fields: 'files(id, name, webContentLink, thumbnailLink)',
                         pageSize: 20
-                    }).then(response => {
-                        const files = response.result.files || [];
-                        log(`找到 ${files.length} 張公開照片`);
-                        log(`檔案列表: ${JSON.stringify(files, null, 2)}`);
-
-                        allPhotos = files;
-                        displayedPhotoCount = 0;
-                        photoWallGrid.innerHTML = '';
-
-                        if (files.length === 0) {
-                            photoWallGrid.innerHTML = '<div class="photo-wall-empty">目前尚無公開照片，快來上傳吧！</div>';
-                            morePhotosBtn.style.display = 'none';
-                            return;
-                        }
-
-                        loadMorePhotos();
-                        updateMoreButton();
-                    }).catch(error => {
-                        log(`載入照片牆失敗: ${error.message}`);
-                        if (error.details) {
-                            log(`錯誤詳情: ${error.details}`);
-                        }
-                        photoWallGrid.innerHTML = '<div class="photo-wall-empty">載入照片失敗，請稍後再試</div>';
-                        morePhotosBtn.style.display = 'none';
                     });
+
+                    const files = response.result.files || [];
+                    log(`找到 ${files.length} 張公開照片`);
+                    log(`檔案列表: ${JSON.stringify(files.map(f => ({ id: f.id, name: f.name })), null, 2)}`);
+
+                    allPhotos = files;
+                    displayedPhotoCount = 0;
+                    photoWallGrid.innerHTML = '';
+
+                    if (files.length === 0) {
+                        photoWallGrid.innerHTML = '<div class="photo-wall-empty">目前尚無公開照片，快來上傳吧！</div>';
+                        morePhotosBtn.style.display = 'none';
+                        log('照片牆為空，顯示空訊息');
+                        return;
+                    }
+
+                    loadMorePhotos();
+                    updateMoreButton();
                 } catch (error) {
                     log(`載入照片牆失敗: ${error.message}`);
                     if (error.details) {
@@ -672,6 +775,7 @@
                     }
                     photoWallGrid.innerHTML = '<div class="photo-wall-empty">載入照片失敗，請稍後再試</div>';
                     morePhotosBtn.style.display = 'none';
+                    showMessage('無法載入照片牆，請檢查網路或稍後重試', 'error');
                 }
             }
 
@@ -995,7 +1099,8 @@
                                 name: fileName,
                                 parents: [FOLDER_ID],
                                 mimeType: file.type,
-                                description: `上傳者: ${username}, 原始文件名: ${file.name}${message ? `, 留言: ${message}` : ''}`
+                                description: `上傳者: ${username}, 原始文件名: ${file.name}${message ? `, 留言: ${message}` : ''}`,
+                                properties: { isPublic: 'true' }
                             };
                             
                             const form = new FormData();
@@ -1066,7 +1171,7 @@
                     }
                     
                     log('所有文件上傳完畢');
-                    showMessage(`${photos.length}個照片，${videos.length}個影片上傳完畢，謝謝您的分享！`, 'success');
+                    showMessage(`${photos.length}個照片，${videos.length}個影片${message ? '和留言' : ''}上傳完畢，謝謝您的分享！`, 'success');
                     previewArea.innerHTML = '';
                     selectedFiles = [];
                     messageInput.value = '';
@@ -1078,7 +1183,10 @@
                     videoInput.value = '';
                     log('上傳完成，已重置照片、影片和留言輸入框');
                     
-                    loadPhotoWall();
+                    setTimeout(() => {
+                        log('延遲後重新載入照片牆');
+                        loadPhotoWall();
+                    }, 2000);
                 } catch (error) {
                     log(`上傳過程錯誤: ${error.message}`);
                     showMessage(`上傳錯誤: ${error.message}`, 'error');
