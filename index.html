@@ -19,7 +19,7 @@
             margin-bottom: 20px; 
         }
         input, textarea, button {
-            font-size: 16px; /* 防止iOS縮放 */
+            font-size: 16px;
             max-width: 100%;
             box-sizing: border-box;
         }
@@ -73,9 +73,9 @@
             background: #c5221f;
         }
         #confirmUploadBtn {
-            background: #7b1fa2; /* 紫色，獨特 */
+            background: #7b1fa2;
             display: none;
-            margin-top: 15px; /* 與字數計數間距 */
+            margin-top: 15px;
         }
         #confirmUploadBtn:active {
             background: #6a1b9a;
@@ -298,6 +298,7 @@
             color: white;
             font-size: 24px;
             text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            pointer-events: none; /* 確保播放圖示不阻礙點擊 */
         }
         .photo-wall-loading {
             display: flex;
@@ -315,7 +316,6 @@
             align-items: center;
             min-height: 100px;
         }
-        /* 語系選擇樣式 */
         .language-selector {
             position: absolute;
             top: 10px;
@@ -333,6 +333,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 1001;
         }
         .language-dropdown {
             display: none;
@@ -343,7 +344,7 @@
             border: 1px solid #ccc;
             border-radius: 4px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            z-index: 1001;
+            z-index: 1002;
         }
         .language-dropdown.show {
             display: block;
@@ -358,7 +359,6 @@
         .language-option:hover {
             background: #f0f0f0;
         }
-        /* 手機版縮小樣式 */
         @media (max-width: 600px) {
             body {
                 margin: 15px auto;
@@ -403,6 +403,9 @@
             .photo-wall-item {
                 flex: 0 0 100px;
                 height: 100px;
+            }
+            .photo-wall-item.video::after {
+                font-size: 20px;
             }
             .photo-wall-empty {
                 font-size: 12px;
@@ -497,7 +500,7 @@
             <div class="photo-wall-loading">
                 <span class="loading-indicator"></span> 載入內容中...
             </div>
-        </div g
+        </div>
         <button id="morePhotosBtn" class="btn" style="display: none;" data-i18n="more_photos_button">更多</button>
     </div>
 
@@ -512,7 +515,7 @@
         lightbox.option({
             'alwaysShowNavOnTouchDevices': true,
             'wrapAround': true,
-            'disableScrolling': true,
+            'fitImagesInViewport': true,
             'albumLabel': '檔案 %1 / %2'
         });
 
@@ -640,7 +643,6 @@
             const savedLang = localStorage.getItem('language') || 'zh-TW';
             applyLanguage(savedLang);
 
-            // 語系選擇下拉選單控制
             languageIcon.addEventListener('click', (e) => {
                 e.stopPropagation();
                 languageDropdown.classList.toggle('show');
@@ -802,6 +804,8 @@
 
             function loadMorePhotos() {
                 const nextFiles = allPhotos.slice(displayedPhotoCount, displayedPhotoCount + 5);
+                log(`載入更多檔案: 從 ${displayedPhotoCount} 到 ${displayedPhotoCount + nextFiles.length}`);
+
                 nextFiles.forEach(file => {
                     const photoItem = document.createElement('div');
                     photoItem.className = `photo-wall-item ${file.mimeType.startsWith('video/') ? 'video' : ''}`;
@@ -810,28 +814,26 @@
                     link.setAttribute('data-title', file.name);
 
                     if (file.mimeType.startsWith('image/')) {
-                        // 照片：使用高解析度縮圖進行放大檢視
-                        link.href = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s800') : file.webContentLink;
+                        link.href = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s800') : 'https://via.placeholder.com/800';
                         const img = document.createElement('img');
-                        img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s400') : '/images/placeholder.png';
+                        img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s400') : 'https://via.placeholder.com/400';
                         img.alt = file.name;
                         img.onload = () => log(`照片牆圖片載入成功: ${file.name}`);
                         img.onerror = () => {
                             log(`照片牆圖片載入失敗: ${file.name}`);
-                            img.src = '/images/placeholder.png';
+                            img.src = 'https://via.placeholder.com/400';
                         };
                         link.appendChild(img);
                     } else {
-                        // 影片：使用縮圖或佔位圖，點擊播放
                         link.href = file.webContentLink;
-                        link.setAttribute('data-video', 'true');
+                        link.setAttribute('data-lb-type', 'video');
                         const img = document.createElement('img');
-                        img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s400') : '/images/video-placeholder.png';
+                        img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s400') : 'https://via.placeholder.com/400?text=Video';
                         img.alt = file.name;
                         img.onload = () => log(`影片縮圖載入成功: ${file.name}`);
                         img.onerror = () => {
                             log(`影片縮圖載入失敗: ${file.name}`);
-                            img.src = '/images/video-placeholder.png';
+                            img.src = 'https://via.placeholder.com/400?text=Video';
                         };
                         link.appendChild(img);
                     }
@@ -863,7 +865,7 @@
 
                 if (!window.gapi) {
                     log('錯誤: Google API 客戶端未載入');
-                    showMessage('無法載入 Google API 客戶端庫，請檢查網路連線或稍後重試', 'error');
+                    showMessage('無法載入 Google API 客戶端庫，請檢查網路連線或稍後再試', 'error');
                     loginBtn.disabled = false;
                     return;
                 }
@@ -925,26 +927,6 @@
                         uploadFiles(selectedFiles, messageInput.value.trim());
                     } else {
                         showMessage('請選擇照片或影片！', 'error');
-                    }
-                });
-
-                // 自訂 Lightbox 影片支援
-                document.addEventListener('click', (e) => {
-                    if (e.target.closest('a[data-video="true"]')) {
-                        e.preventDefault();
-                        const href = e.target.closest('a').href;
-                        const title = e.target.closest('a').getAttribute('data-title');
-                        const video = document.createElement('video');
-                        video.src = href;
-                        video.controls = true;
-                        video.autoplay = true;
-                        video.style.maxWidth = '90%';
-                        video.style.maxHeight = '90%';
-                        lightbox.start({
-                            href: href,
-                            title: title,
-                            content: video.outerHTML
-                        });
                     }
                 });
             }
@@ -1079,7 +1061,7 @@
                     
                     gapi.client.setToken({ access_token: accessToken });
                     
-                    const photos = items.filter(item => item.type === 'photo');
+                    const photos = items효소('photo');
                     const videos = items.filter(item => item.type === 'video');
                     
                     let completedFiles = 0;
