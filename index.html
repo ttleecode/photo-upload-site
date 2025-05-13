@@ -314,7 +314,315 @@
         .language-icon {
             font-size: 24px;
             cursor: pointer;
-            background: rgba(255, 255, 255, 0.8);
+            color: #000; /* 黑色圖示 */
+            border-radius: 50%;
+            padding: 5px;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .language-dropdown {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 0;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+        }
+        .language-dropdown.show {
+            display: block;
+        }
+        .language-option {
+            padding: 10px 20px;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            text-align: left;
+        }
+        .language-option:hover {
+            background: #f0f0f0;
+        }
+        /* 手機版縮小樣式 */
+        @media (max-width: 600px) {
+            body {
+                margin: 15px auto;
+                font-size: 14px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            h2 {
+                font-size: 18px;
+            }
+            .section {
+                margin-bottom: 15px;
+            }
+            .btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+            #morePhotosBtn {
+                width: 100px;
+                font-size: 14px;
+            }
+            .supplement {
+                font-size: 12px;
+                line-height: 1.4;
+            }
+            .status-message {
+                font-size: 12px;
+                padding: 8px;
+            }
+            .file-info {
+                font-size: 10px;
+            }
+            #username, #messageInput {
+                padding: 8px;
+                font-size: 14px;
+            }
+            .preview-item {
+                width: 80px;
+                height: 80px;
+            }
+            .photo-wall-item {
+                flex: 0 0 Gabriela
+                font-size: 18px;
+                color: #155724;
+                background-color: #d4edda;
+                border: 1px solid #c3e6cb;
+                padding: 10px;
+                margin: 10px 0;
+                border-radius: 4px;
+            }
+            .error {
+                font-size: 18px;
+                color: #721c24;
+                background-color: #f8d7da;
+                border: 1px solid #f5c6cb;
+                padding: 10px;
+                margin: 10px 0;
+                border-radius: 4px;
+            }
+            .info {
+                font-size: 18px;
+                color: #0c5460;
+                background-color: #e2f3fc;
+                border: 1px solid #bee5eb;
+                padding: 10px;
+                margin: 10px 0;
+                border-radius: 4px;
+            }
+            .warning {
+                font-size: 18px;
+                color: #856404;
+                background-color: #fff3cd;
+                border: 1px solid #ffeeba;
+                padding: 10px;
+                margin: 10px 0;
+                border-radius: 4px;
+            }
+        }
+        .loading-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border: 2px solid rgba(0, 0, 0, 0.2);
+            border-radius: 50%;
+            border-top-color: #4285f4;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 5px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .progress-container {
+            width: 100%;
+            background: #f0f0f0;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 20px;
+            background: #4285f4;
+            transition: width 0.3s ease-in-out;
+        }
+        .file-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            text-align: center;
+        }
+        #debug {
+            font-family: monospace;
+            font-size: 12px;
+            padding: 10px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            margin-top: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+        }
+        .toggle-debug {
+            font-size: 12px;
+            color: #666;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-top: 20px;
+            display: inline-block;
+        }
+        .header-image {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: block;
+        }
+        .supplement {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+        #previewArea {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+            justify-content: center;
+        }
+        .preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            overflow: hidden;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .preview-item img, .preview-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #ea4335;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            line-height: 20px;
+            text-align: center;
+            cursor: pointer;
+            padding: 0;
+        }
+        .remove-btn:hover {
+            background: #c5221f;
+        }
+        .preview-fallback {
+            width: 100%;
+            height: 100%;
+            background: #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 12px;
+            text-align: center;
+        }
+        .message-section {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+        #messageInput {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 10px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        .char-count {
+            font-size: 12px;
+            color: #666;
+            text-align: right;
+            margin-top: 5px;
+        }
+        .char-count.warning {
+            color: #856404;
+        }
+        #photoWall {
+            margin: 20px 0;
+        }
+        .photo-wall-grid {
+            display: flex;
+            flex-direction: row;
+            overflow-x: auto;
+            gap: 10px;
+            margin-top: 10px;
+            padding-bottom: 10px;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        .photo-wall-item {
+            flex: 0 0 120px;
+            height: 120px;
+            overflow: hidden;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .photo-wall-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .photo-wall-item:hover {
+            opacity: 0.9;
+        }
+        .photo-wall-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .photo-wall-empty {
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100px;
+        }
+        /* 語系選擇新樣式 */
+        .language-selector {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+        .language-icon {
+            font-size: 24px;
+            cursor: pointer;
+            color: #000; /* 黑色圖示 */
             border-radius: 50%;
             padding: 5px;
             width: 34px;
@@ -409,6 +717,7 @@
                 width: 30px;
                 height: 30px;
                 padding: 4px;
+                color: #000; /* 手機版保持黑色 */
             }
             .language-option {
                 font-size: 12px;
@@ -424,7 +733,7 @@
             <div class="language-selector">
                 <div class="language-icon" id="languageIcon">🌐</div>
                 <div class="language-dropdown" id="languageDropdown">
-                    <div class="language-option" data-lang="zh-TW">繁體中文</div>
+                    <div class="language-option" data-lang="zh-TW">中文</div>
                     <div class="language-option" data-lang="en">English</div>
                 </div>
             </div>
