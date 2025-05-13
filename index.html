@@ -350,315 +350,7 @@
         /* 手機版縮小樣式 */
         @media (max-width: 600px) {
             body {
-                margin: 15px auto;
-                font-size: 14px;
-            }
-            h1 {
-                font-size: 20px;
-            }
-            h2 {
-                font-size: 18px;
-            }
-            .section {
-                margin-bottom: 15px;
-            }
-            .btn {
-                padding: 10px 16px;
-                font-size: 14px;
-            }
-            #morePhotosBtn {
-                width: 100px;
-                font-size: 14px;
-            }
-            .supplement {
-                font-size: 12px;
-                line-height: 1.4;
-            }
-            .status-message {
-                font-size: 12px;
-                padding: 8px;
-            }
-            .file-info {
-                font-size: 10px;
-            }
-            #username, #messageInput {
-                padding: 8px;
-                font-size: 14px;
-            }
-            .preview-item {
-                width: 80px;
-                height: 80px;
-            }
-            .photo-wall-item {
-                flex: 0 0 Gabriela
-                font-size: 18px;
-                color: #155724;
-                background-color: #d4edda;
-                border: 1px solid #c3e6cb;
-                padding: 10px;
-                margin: 10px 0;
-                border-radius: 4px;
-            }
-            .error {
-                font-size: 18px;
-                color: #721c24;
-                background-color: #f8d7da;
-                border: 1px solid #f5c6cb;
-                padding: 10px;
-                margin: 10px 0;
-                border-radius: 4px;
-            }
-            .info {
-                font-size: 18px;
-                color: #0c5460;
-                background-color: #e2f3fc;
-                border: 1px solid #bee5eb;
-                padding: 10px;
-                margin: 10px 0;
-                border-radius: 4px;
-            }
-            .warning {
-                font-size: 18px;
-                color: #856404;
-                background-color: #fff3cd;
-                border: 1px solid #ffeeba;
-                padding: 10px;
-                margin: 10px 0;
-                border-radius: 4px;
-            }
-        }
-        .loading-indicator {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border: 2px solid rgba(0, 0, 0, 0.2);
-            border-radius: 50%;
-            border-top-color: #4285f4;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 5px;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .progress-container {
-            width: 100%;
-            background: #f0f0f0;
-            border-radius: 4px;
-            margin: 10px 0;
-            overflow: hidden;
-        }
-        .progress-bar {
-            width: 0%;
-            height: 20px;
-            background: #4285f4;
-            transition: width 0.3s ease-in-out;
-        }
-        .file-info {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-            text-align: center;
-        }
-        #debug {
-            font-family: monospace;
-            font-size: 12px;
-            padding: 10px;
-            background: #f5f5f5;
-            border: 1px solid #ddd;
-            margin-top: 20px;
-            max-height: 150px;
-            overflow-y: auto;
-            display: none;
-        }
-        .toggle-debug {
-            font-size: 12px;
-            color: #666;
-            text-decoration: underline;
-            cursor: pointer;
-            margin-top: 20px;
-            display: inline-block;
-        }
-        .header-image {
-            width: 100%;
-            max-width: 600px;
-            height: auto;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: block;
-        }
-        .supplement {
-            font-size: 14px;
-            color: #666;
-            margin-top: 10px;
-            line-height: 1.5;
-        }
-        #previewArea {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 10px 0;
-            justify-content: center;
-        }
-        .preview-item {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            overflow: hidden;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        .preview-item img, .preview-item video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .remove-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: #ea4335;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 12px;
-            line-height: 20px;
-            text-align: center;
-            cursor: pointer;
-            padding: 0;
-        }
-        .remove-btn:hover {
-            background: #c5221f;
-        }
-        .preview-fallback {
-            width: 100%;
-            height: 100%;
-            background: #ccc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 12px;
-            text-align: center;
-        }
-        .message-section {
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #f9f9f9;
-        }
-        #messageInput {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            margin-top: 10px;
-            resize: vertical;
-            min-height: 80px;
-        }
-        .char-count {
-            font-size: 12px;
-            color: #666;
-            text-align: right;
-            margin-top: 5px;
-        }
-        .char-count.warning {
-            color: #856404;
-        }
-        #photoWall {
-            margin: 20px 0;
-        }
-        .photo-wall-grid {
-            display: flex;
-            flex-direction: row;
-            overflow-x: auto;
-            gap: 10px;
-            margin-top: 10px;
-            padding-bottom: 10px;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-        }
-        .photo-wall-item {
-            flex: 0 0 120px;
-            height: 120px;
-            overflow: hidden;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        .photo-wall-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-        .photo-wall-item:hover {
-            opacity: 0.9;
-        }
-        .photo-wall-loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .photo-wall-empty {
-            font-size: 14px;
-            color: #666;
-            text-align: center;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100px;
-        }
-        /* 語系選擇新樣式 */
-        .language-selector {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-        }
-        .language-icon {
-            font-size: 24px;
-            cursor: pointer;
-            color: #000; /* 黑色圖示 */
-            border-radius: 50%;
-            padding: 5px;
-            width: 34px;
-            height: 34px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .language-dropdown {
-            display: none;
-            position: absolute;
-            top: 40px;
-            right: 0;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            z-index: 1001;
-        }
-        .language-dropdown.show {
-            display: block;
-        }
-        .language-option {
-            padding: 10px 20px;
-            font-size: 14px;
-            color: #333;
-            cursor: pointer;
-            text-align: left;
-        }
-        .language-option:hover {
-            background: #f0f0f0;
-        }
-        /* 手機版縮小樣式 */
-        @media (max-width: 600px) {
-            body {
-                margin: 15px auto;
+               彼此: 15px auto;
                 font-size: 14px;
             }
             h1 {
@@ -1054,22 +746,32 @@
                 photoWallGrid.innerHTML = '<div class="photo-wall-loading"><span class="loading-indicator"></span> 載入照片中...</div>';
 
                 try {
-                    const response = await gapi.client.drive.files.list({
-                        q: `'${FOLDER_ID}' in parents and mimeType contains 'image/' and properties has { key='isPublic' and value='true' }`,
-                        fields: 'files(id, name, webContentLink, thumbnailLink)',
-                        pageSize: 20
-                    });
+                    let allFiles = [];
+                    let pageToken = null;
 
-                    const files = response.result.files || [];
-                    log(`找到 ${files.length} 張公開照片`);
-                    log(`檔案列表: ${JSON.stringify(files.map(f => ({ id: f.id, name: f.name })), null, 2)}`);
+                    do {
+                        const response = await gapi.client.drive.files.list({
+                            q: `'${FOLDER_ID}' in parents and mimeType contains 'image/'`,
+                            fields: 'nextPageToken, files(id, name, webContentLink, thumbnailLink)',
+                            pageSize: 100,
+                            pageToken: pageToken
+                        });
 
-                    allPhotos = files;
+                        const files = response.result.files || [];
+                        allFiles = allFiles.concat(files);
+                        pageToken = response.result.nextPageToken;
+                        log(`本次查詢找到 ${files.length} 張照片，總計 ${allFiles.length} 張`);
+                    } while (pageToken);
+
+                    log(`總共找到 ${allFiles.length} 張照片`);
+                    log(`檔案列表: ${JSON.stringify(allFiles.map(f => ({ id: f.id, name: f.name })), null, 2)}`);
+
+                    allPhotos = allFiles;
                     displayedPhotoCount = 0;
                     photoWallGrid.innerHTML = '';
 
-                    if (files.length === 0) {
-                        photoWallGrid.innerHTML = '<div class="photo-wall-empty">目前尚無公開照片，快來上傳吧！</div>';
+                    if (allFiles.length === 0) {
+                        photoWallGrid.innerHTML = '<div class="photo-wall-empty">目前尚無照片，快來上傳吧！</div>';
                         morePhotosBtn.style.display = 'none';
                         log('照片牆為空，顯示空訊息');
                         return;
@@ -1084,7 +786,7 @@
                     }
                     photoWallGrid.innerHTML = '<div class="photo-wall-empty">載入照片失敗，請稍後再試</div>';
                     morePhotosBtn.style.display = 'none';
-                    showMessage('無法載入照片牆，請檢查網路或稍後重試', 'error');
+                    showMessage('無法載入照片牆，請檢查網路或稍後再試', 'error');
                 }
             }
 
@@ -1420,7 +1122,9 @@
                                 const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
                                     method: 'POST',
                                     headers: {
-                                        'Authorization': `Bearer ${accessToken}`
+                                        '
+
+Authorization': `Bearer ${accessToken}`
                                     },
                                     body: form
                                 });
