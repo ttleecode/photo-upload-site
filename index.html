@@ -651,7 +651,7 @@
 
             function showMessage(message, type = 'info', progress = null) {
                 const messageDiv = document.createElement('div');
-                if (progress !== cuis) {
+                if (progress !== null) {
                     messageDiv.className = 'progress-container';
                     messageDiv.innerHTML = 
                         `<div class="progress-bar" style="width: ${progress}%"></div>`;
@@ -851,6 +851,13 @@
                         });
                         log('Google API 客戶端初始化成功');
                         
+                        if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+                            log('錯誤: Google Identity Services 未正確載入');
+                            showMessage('Google Identity Services 未正確載入，請檢查網路或稍後重試', 'error');
+                            loginBtn.disabled = false;
+                            return;
+                        }
+
                         tokenClient = google.accounts.oauth2.initTokenClient({
                             client_id: CLIENT_ID,
                             scope: SCOPES,
@@ -867,7 +874,7 @@
                         if (error.details) {
                             log(`錯誤詳情: ${error.details}`);
                         }
-                        showMessage(`初始化 Google API 失敗: ${error.message}. 請檢查網路連線或稍後再試。`, 'error');
+                        showMessage(`初始化 Google API 失敗: ${error.message}. 請檢查網路連線或稍後重試。`, 'error');
                         loginBtn.disabled = false;
                     }
                 });
