@@ -14,6 +14,7 @@
             -webkit-text-size-adjust: 100%;
             max-width: 600px;
             text-align: center;
+            position: relative;
         }
         .section { 
             margin-bottom: 20px; 
@@ -92,6 +93,8 @@
         }
         #uploadStatus {
             margin-top: 20px;
+            position: relative;
+            overflow: hidden;
         }
         .status-message {
             padding: 10px;
@@ -99,8 +102,11 @@
             border-radius: 4px;
             font-size: 14px;
             text-align: center;
+            position: relative;
         }
         .status-message.success {
+            color: #155724;
+            border: 1px solid #c3e6cb;
             background: linear-gradient(90deg, #d4edda, #a5d6a7); /* 淺綠到深綠 */
             animation: successGradient 2s ease forwards;
         }
@@ -112,9 +118,25 @@
                 background-position: 100% 50%;
             }
         }
-        .success { 
-            color: #155724; 
-            border: 1px solid #c3e6cb;
+        .status-message.success .heart-bubble {
+            position: absolute;
+            font-size: 16px;
+            color: #ff4d4d; /* 愛心顏色 */
+            opacity: 0;
+            animation: floatUp 1.5s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% {
+                opacity: 0;
+                transform: translateY(0) scale(0);
+            }
+            20% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px) scale(1.5);
+            }
         }
         .error { 
             background-color: #f8d7da; 
@@ -699,6 +721,21 @@
                     uploadStatus.innerHTML = '';
                     uploadStatus.appendChild(messageDiv);
                     // 不自動滾動，保持當前視口位置
+                    if (type === 'success') {
+                        createHeartBubbles(messageDiv);
+                    }
+                }
+            }
+
+            function createHeartBubbles(messageDiv) {
+                const bubbleCount = 3; // 產生 3 個愛心
+                for (let i = 0; i < bubbleCount; i++) {
+                    const heart = document.createElement('span');
+                    heart.className = 'heart-bubble';
+                    heart.innerHTML = '💖'; // 使用愛心符號
+                    heart.style.left = `${Math.random() * 80 + 10}%`; // 隨機水平位置 (10% 到 90%)
+                    heart.style.animationDelay = `${i * 0.2}s`; // 延遲啟動，避免同時出現
+                    messageDiv.appendChild(heart);
                 }
             }
 
@@ -1340,8 +1377,8 @@
                     
                     log('所有文件上傳完畢');
                     const currentLang = localStorage.getItem('language') || 'zh-TW';
-                    const successMessage = translations[currentLang].upload_success_message;
-                    showMessage(`${photos.length}個照片，${videos.length}個影片${message ? '和留言' : ''}${successMessage}`, 'success');
+                    const successMessage = `${photos.length}個照片，${videos.length}個影片${message ? '和留言' : ''}${translations[currentLang].upload_success_message}`;
+                    showMessage(successMessage, 'success');
                     previewArea.innerHTML = '';
                     selectedFiles = [];
                     messageInput.value = '';
