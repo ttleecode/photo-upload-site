@@ -6,7 +6,7 @@
     <title>🤵🏻Tim & Lena👰<br>✨婚禮日✨</title>
     <!-- 引入 Lightbox2 CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
-    <!-- 引入 Font Awesome 圖示庫（新增） -->
+    <!-- 引入 Font Awesome 圖示庫 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { 
@@ -461,7 +461,7 @@
                 padding: 15px;
             }
         }
-        /* 新增：滾動進度條樣式 */
+        /* 滾動進度條樣式 */
         .scroll-progress {
             position: fixed;
             top: 0;
@@ -471,14 +471,14 @@
             background: #ff69b4;
             z-index: 1000;
         }
-        /* 新增：倒數計時樣式 */
+        /* 倒數計時樣式 */
         #countdown {
             font-size: 16px;
             color: #ff69b4;
             margin: 10px 0;
             font-weight: bold;
         }
-        /* 新增：粒子背景樣式 */
+        /* 粒子背景樣式 */
         #particles-js {
             position: fixed;
             top: 0;
@@ -490,9 +490,9 @@
     </style>
 </head>
 <body>
-    <!-- 新增：粒子背景容器 -->
+    <!-- 粒子背景容器 -->
     <div id="particles-js"></div>
-    <!-- 新增：滾動進度條 -->
+    <!-- 滾動進度條 -->
     <div class="scroll-progress" id="scrollProgress"></div>
 
     <div class="section" id="topPhotoArea">
@@ -507,7 +507,7 @@
             </div>
         </div>
         <h1 data-i18n="title">🤵🏻Tim & Lena👰<br>✨婚禮日✨</h1>
-        <!-- 新增：倒數計時顯示 -->
+        <!-- 倒數計時顯示 -->
         <div id="countdown"></div>
         <div class="supplement" data-i18n="welcome_message">
             歡迎大家上傳想要和我們分享的照片或影片🎞️<br>
@@ -536,16 +536,12 @@
     <div class="section" id="uploadArea" style="display: none;">
         <input type="file" id="photoInput" accept="image/*" multiple style="display: none;">
         <input type="file" id="videoInput" accept="video/*" multiple style="display: none;">
-        
-        <!-- 修改：主題化按鈕 -->
+        <!-- 主題化按鈕 -->
         <button id="photoBtn" class="btn upload-btn" data-i18n="photo_button"><i class="fa-solid fa-camera"></i> 選擇照片</button>
         <button id="videoBtn" class="btn upload-btn" data-i18n="video_button"><i class="fa-solid fa-video"></i> 選擇影片</button>
-        
         <div id="previewArea"></div>
-        
         <div class="file-info" data-i18n="file_info_photo">支援的照片格式: JPG, PNG, GIF 等</div>
         <div class="file-info" data-i18n="file_info_video">支援的影片格式: MP4, MOV, AVI 等 (建議大小小於 1GB)</div>
-        
         <div class="message-section">
             <label for="messageInput" data-i18n="message_label">留言或祝福（可選填，將與檔案一起上傳）：</label>
             <textarea id="messageInput" placeholder="寫下您的祝福或想說的話..." data-i18n-placeholder="message_placeholder" maxlength="500"></textarea>
@@ -577,7 +573,7 @@
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
-    <!-- 新增：粒子效果腳本 -->
+    <!-- 粒子效果腳本 -->
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
     <script>
@@ -612,7 +608,7 @@
         const translations = {
             'zh-TW': {
                 title: '🤵🏻Tim & Lena👰<br>✨婚禮日✨',
-                welcome_message: '歡迎大家上傳想要和我們分享的照片或影片🎞️<br>也可以留下祝福或留言，與我們分享您的喜悅💌<br>把我們婚禮上歡樂的點滴都留存起來吧💖<br><br>✨上傳步驟✨<br>Step1. 輸入您的姓名<br>Step2. 登入您的Google帳號<br>Step3. 分享照片、影片或祝福，捕捉每個感動瞬間！',
+                welcome_message: '歡迎大家上傳想要和我們分享的照片或影片🎞️<br>也可以留下祝福或留言，與我們分享 Romans 分享您的喜悅💌<br>把我們婚禮上歡樂的點滴都留存起來吧💖<br><br>✨上傳步驟✨<br>Step1. 輸入您的姓名<br>Step2. 登入您的Google帳號<br>Step3. 分享照片、影片或祝福，捕捉每個感動瞬間！',
                 username_label: '親友姓名：',
                 username_placeholder: '輸入您的姓名',
                 login_button: '登入 Google 帳號',
@@ -681,23 +677,23 @@
             window.scrollTo(0, 0);
             log('頁面載入，滾動到頂部');
 
-            // 新增：粒子效果初始化
+            // 粒子效果初始化（模擬 🌸 花瓣）
             particlesJS('particles-js', {
                 particles: {
                     number: { value: 50 },
                     color: { value: '#ff69b4' },
-                    shape: { type: 'image', image: { src: '/images/petal.png', width: 20, height: 20 } }, // 需提供花瓣圖片
+                    shape: { type: 'circle' },
                     opacity: { value: 0.5, random: true },
-                    size: { value: 10, random: true },
+                    size: { value: 8, random: true },
                     move: { enable: true, speed: 2, direction: 'bottom', random: false, out_mode: 'out' }
                 },
                 interactivity: { enable: false }
             });
-            log('花瓣粒子效果初始化完成');
+            log('🌸 花瓣粒子效果初始化完成');
 
-            // 新增：倒數計時
+            // 倒數計時
             function updateCountdown() {
-                const weddingDate = new Date('2025-06-01T00:00:00'); // 假設婚禮日期為 2025-06-01
+                const weddingDate = new Date('2025-11-15T12:00:00');
                 const now = new Date();
                 const diff = weddingDate - now;
                 const countdownElement = document.getElementById('countdown');
@@ -717,7 +713,7 @@
             updateCountdown(); // 立即更新
             log('倒數計時初始化');
 
-            // 新增：滾動進度條
+            // 滾動進度條
             window.addEventListener('scroll', () => {
                 const winScroll = document.documentElement.scrollTop;
                 const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
