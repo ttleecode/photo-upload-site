@@ -406,10 +406,13 @@
             .btn {
                 padding: 10px 16px;
                 font-size: 14px;
+                width: 66.67%;
+                margin: 15px auto;
             }
             #morePhotosBtn {
-                width: 100px;
+                width: 66.67%;
                 font-size: 14px;
+                margin: 15px auto;
             }
             .supplement {
                 font-size: 12px;
@@ -510,7 +513,7 @@
         <!-- 倒數計時顯示 -->
         <div id="countdown"></div>
         <div class="supplement" data-i18n="welcome_message">
-            歡迎大家上傳想要和我們分享的照片或影片🎞️<br>
+            歡迎大家上傳energized by Tim & Lena<br>
             也可以留下祝福或留言，與我們分享您的喜悅💌<br>
             把我們婚禮上歡樂的點滴都留存起來吧💖<br>
             <br>
@@ -608,7 +611,7 @@
         const translations = {
             'zh-TW': {
                 title: '🤵🏻Tim & Lena👰<br>✨婚禮日✨',
-                welcome_message: '歡迎大家上傳想要和我們分享的照片或影片🎞️<br>也可以留下祝福或留言，與我們分享 Romans 分享您的喜悅💌<br>把我們婚禮上歡樂的點滴都留存起來吧💖<br><br>✨上傳步驟✨<br>Step1. 輸入您的姓名<br>Step2. 登入您的Google帳號<br>Step3. 分享照片、影片或祝福，捕捉每個感動瞬間！',
+                welcome_message: '歡迎大家上傳想要和我們分享的照片或影片🎞️<br>也可以留下祝福或留言，與我們分享您的喜悅💌<br>把我們婚禮上歡樂的點滴都留存起來吧💖<br><br>✨上傳步驟✨<br>Step1. 輸入您的姓名<br>Step2. 登入您的Google帳號<br>Step3. 分享照片、影片或祝福，捕捉每個感動瞬間！',
                 username_label: '親友姓名：',
                 username_placeholder: '輸入您的姓名',
                 login_button: '登入 Google 帳號',
@@ -1434,56 +1437,56 @@
                                     resource: {
                                         type: 'anyone',
                                         role: 'reader'
-                                    }
-                                });
-                                log(`已設置公開讀取權限: ${fileName}`);
-                                updateProgress();
-                            } else {
-                                log(`留言上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
-                                throw new Error(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`);
+                                        }
+                                    });
+                                    log(`已設置公開讀取權限: ${fileName}`);
+                                    updateProgress();
+                                } else {
+                                    log(`留言上傳失敗: ${fileName} - ${JSON.stringify(result)}`);
+                                    throw new Error(`${fileName} 上傳失敗: ${result.error?.message || '未知錯誤'}`);
+                                }
+                            } catch (uploadError) {
+                                log(`留言上傳過程中出錯: ${fileName} - ${uploadError.message}`);
+                                throw uploadError;
                             }
-                        } catch (uploadError) {
-                            log(`留言上傳過程中出錯: ${fileName} - ${uploadError.message}`);
-                            throw uploadError;
                         }
+                        
+                        log('所有文件上傳流程完成');
+                        previewArea.innerHTML = '';
+                        selectedFiles = [];
+                        messageInput.value = '';
+                        charCount.textContent = '0/500 字';
+                        mediaURLs.forEach(url => URL.revokeObjectURL(url));
+                        mediaURLs = [];
+                        photoInput.value = '';
+                        videoInput.value = '';
+                        log('上傳完成，已重置照片、影片和留言輸入框');
+                        previewFiles();
+                        
+                        setTimeout(() => {
+                            log('延遲後重新載入照片牆');
+                            loadPhotoWall();
+                        }, 2000);
+                    } catch (error) {
+                        log(`上傳過程錯誤: ${error.message}`);
+                        showMessage(`上傳錯誤: ${error.message}`, 'error');
+                        confirmUploadBtn.disabled = false;
+                        log('上傳失敗，按鈕重新啟用');
                     }
-                    
-                    log('所有文件上傳流程完成');
-                    previewArea.innerHTML = '';
-                    selectedFiles = [];
-                    messageInput.value = '';
-                    charCount.textContent = '0/500 字';
-                    mediaURLs.forEach(url => URL.revokeObjectURL(url));
-                    mediaURLs = [];
-                    photoInput.value = '';
-                    videoInput.value = '';
-                    log('上傳完成，已重置照片、影片和留言輸入框');
-                    previewFiles();
-                    
-                    setTimeout(() => {
-                        log('延遲後重新載入照片牆');
-                        loadPhotoWall();
-                    }, 2000);
-                } catch (error) {
-                    log(`上傳過程錯誤: ${error.message}`);
-                    showMessage(`上傳錯誤: ${error.message}`, 'error');
-                    confirmUploadBtn.disabled = false;
-                    log('上傳失敗，按鈕重新啟用');
                 }
-            }
-            
-            loginBtn.disabled = true;
-            showMessage('正在初始化...', 'info');
-            loadGoogleIdentityScript(() => {
-                if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
-                    log('錯誤: Google Identity Services 未正確初始化');
-                    showMessage('Google Identity Services 初始化失敗，請檢查網路連線或禁用廣告攔截器後重試', 'error');
-                    loginBtn.disabled = false;
-                    return;
-                }
-                initializeApp();
+                
+                loginBtn.disabled = true;
+                showMessage('正在初始化...', 'info');
+                loadGoogleIdentityScript(() => {
+                    if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+                        log('錯誤: Google Identity Services 未正確初始化');
+                        showMessage('Google Identity Services 初始化失敗，請檢查網路連線或禁用廣告攔截器後重試', 'error');
+                        loginBtn.disabled = false;
+                        return;
+                    }
+                    initializeApp();
+                });
             });
-        });
-    </script>
-</body>
+        </script>
+    </body>
 </html>
