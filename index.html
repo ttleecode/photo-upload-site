@@ -6,6 +6,8 @@
     <title>🤵🏻Tim & Lena👰<br>✨婚禮日✨</title>
     <!-- 引入 Lightbox2 CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
+    <!-- 引入 Font Awesome 圖示庫（新增） -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
@@ -20,7 +22,7 @@
             margin-bottom: 20px; 
         }
         input, textarea, button {
-            font-size: 16px; /* 防止iOS縮放 */
+            font-size: 16px;
             max-width: 100%;
             box-sizing: border-box;
         }
@@ -53,8 +55,8 @@
             appearance: none;
         }
         .btn:active {
-            transform: scale(0.95); /* 縮放到 95% 大小 */
-            transition: transform 0.1s ease; /* 快速過渡效果 */
+            transform: scale(0.95);
+            transition: transform 0.1s ease;
         }
         #loginBtn {
             background: #34a853;
@@ -75,9 +77,9 @@
             background: #c5221f;
         }
         #confirmUploadBtn {
-            background: #7b1fa2; /* 紫色，獨特 */
+            background: #7b1fa2;
             display: none;
-            margin-top: 15px; /* 與字數計數間距 */
+            margin-top: 15px;
         }
         #confirmUploadBtn:active {
             background: #6a1b9a;
@@ -107,7 +109,7 @@
         .status-message.success {
             color: #155724;
             border: 1px solid #c3e6cb;
-            background: linear-gradient(90deg, #d4edda, #a5d6a7); /* 淺綠到深綠 */
+            background: linear-gradient(90deg, #d4edda, #a5d6a7);
             animation: successGradient 2s ease forwards;
         }
         @keyframes successGradient {
@@ -158,7 +160,7 @@
             width: 0%;
             height: 20px;
             background: #4285f4;
-            transition: width 0.5s ease-in-out; /* 平滑過渡 */
+            transition: width 0.5s ease-in-out;
         }
         .progress-text {
             position: absolute;
@@ -305,6 +307,12 @@
             overflow: hidden;
             border-radius: 4px;
             border: 1px solid #ddd;
+            opacity: 0;
+            transform: translateX(20px);
+            animation: slideIn 0.5s ease forwards;
+        }
+        @keyframes slideIn {
+            to { opacity: 1; transform: translateX(0); }
         }
         .photo-wall-item img {
             width: 100%;
@@ -331,7 +339,6 @@
             align-items: center;
             min-height: 100px;
         }
-        /* 語系選擇新樣式 */
         .language-selector {
             position: absolute;
             top: 10px;
@@ -341,7 +348,7 @@
         .language-icon {
             font-size: 24px;
             cursor: pointer;
-            color: #000; /* 黑色圖示 */
+            color: #000;
             border-radius: 50%;
             padding: 5px;
             width: 34px;
@@ -374,7 +381,6 @@
         .language-option:hover {
             background: #f0f0f0;
         }
-        /* 頁腳樣式 */
         footer {
             text-align: center;
             padding: 20px;
@@ -383,7 +389,6 @@
             margin-top: 20px;
             border-top: 1px solid #eee;
         }
-        /* 手機版縮小樣式 */
         @media (max-width: 600px) {
             body {
                 margin: 15px auto;
@@ -445,7 +450,7 @@
                 width: 30px;
                 height: 30px;
                 padding: 4px;
-                color: #000; /* 手機版保持黑色 */
+                color: #000;
             }
             .language-option {
                 font-size: 12px;
@@ -456,9 +461,40 @@
                 padding: 15px;
             }
         }
+        /* 新增：滾動進度條樣式 */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 4px;
+            background: #ff69b4;
+            z-index: 1000;
+        }
+        /* 新增：倒數計時樣式 */
+        #countdown {
+            font-size: 16px;
+            color: #ff69b4;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        /* 新增：粒子背景樣式 */
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
     </style>
 </head>
 <body>
+    <!-- 新增：粒子背景容器 -->
+    <div id="particles-js"></div>
+    <!-- 新增：滾動進度條 -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+
     <div class="section" id="topPhotoArea">
         <div style="position: relative;">
             <img src="/images/chinese_style2.png" alt="Wedding Decoration" class="header-image">
@@ -471,6 +507,8 @@
             </div>
         </div>
         <h1 data-i18n="title">🤵🏻Tim & Lena👰<br>✨婚禮日✨</h1>
+        <!-- 新增：倒數計時顯示 -->
+        <div id="countdown"></div>
         <div class="supplement" data-i18n="welcome_message">
             歡迎大家上傳想要和我們分享的照片或影片🎞️<br>
             也可以留下祝福或留言，與我們分享您的喜悅💌<br>
@@ -489,7 +527,7 @@
     </div>
 
     <div class="section" id="authArea">
-        <button id="loginBtn" class="btn" data-i18n="login_button">1. 登入 Google 帳號</button>
+        <button id="loginBtn" class="btn" data-i18n="login_button"><i class="fa-solid fa-right-to-bracket"></i> 登入 Google 帳號</button>
         <div class="supplement warning" data-i18n="auth_warning">
             ✨若忘記Google帳號密碼，隨時透過Line聯繫我們✨<br>✨若看到「未驗證」警告，請點擊「進階」並「繼續」登入✨<br>
         </div>
@@ -499,8 +537,9 @@
         <input type="file" id="photoInput" accept="image/*" multiple style="display: none;">
         <input type="file" id="videoInput" accept="video/*" multiple style="display: none;">
         
-        <button id="photoBtn" class="btn upload-btn" data-i18n="photo_button">📸選擇照片📸</button>
-        <button id="videoBtn" class="btn upload-btn" data-i18n="video_button">🎥選擇影片🎥</button>
+        <!-- 修改：主題化按鈕 -->
+        <button id="photoBtn" class="btn upload-btn" data-i18n="photo_button"><i class="fa-solid fa-camera"></i> 選擇照片</button>
+        <button id="videoBtn" class="btn upload-btn" data-i18n="video_button"><i class="fa-solid fa-video"></i> 選擇影片</button>
         
         <div id="previewArea"></div>
         
@@ -511,7 +550,7 @@
             <label for="messageInput" data-i18n="message_label">留言或祝福（可選填，將與檔案一起上傳）：</label>
             <textarea id="messageInput" placeholder="寫下您的祝福或想說的話..." data-i18n-placeholder="message_placeholder" maxlength="500"></textarea>
             <div id="charCount" class="char-count">0/500 字</div>
-            <button id="confirmUploadBtn" class="btn" data-i18n="confirm_upload_button">確認上傳</button>
+            <button id="confirmUploadBtn" class="btn" data-i18n="confirm_upload_button"><i class="fa-solid fa-heart"></i> 確認上傳</button>
         </div>
     </div>
 
@@ -531,7 +570,6 @@
     <span class="toggle-debug" onclick="toggleDebug()">顯示/隱藏調試信息</span>
     <div id="debug"></div>
 
-    <!-- 頁腳 -->
     <footer>
         <p>© 2025 Designed by Tim Lee</p>
     </footer>
@@ -539,6 +577,8 @@
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+    <!-- 新增：粒子效果腳本 -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
     <script>
         function log(message) {
@@ -575,10 +615,10 @@
                 welcome_message: '歡迎大家上傳想要和我們分享的照片或影片🎞️<br>也可以留下祝福或留言，與我們分享您的喜悅💌<br>把我們婚禮上歡樂的點滴都留存起來吧💖<br><br>✨上傳步驟✨<br>Step1. 輸入您的姓名<br>Step2. 登入您的Google帳號<br>Step3. 分享照片、影片或祝福，捕捉每個感動瞬間！',
                 username_label: '親友姓名：',
                 username_placeholder: '輸入您的姓名',
-                login_button: '1. 登入 Google 帳號',
+                login_button: '登入 Google 帳號',
                 auth_warning: '✨若忘記Google帳號密碼，隨時透過Line聯繫我們✨<br>✨若看到「未驗證」警告，請點擊「進階」並「繼續」登入✨<br>',
-                photo_button: '📸選擇照片📸',
-                video_button: '🎥選擇影片🎥',
+                photo_button: '選擇照片',
+                video_button: '選擇影片',
                 file_info_photo: '支援的照片格式: JPG, PNG, GIF 等',
                 file_info_video: '支援的影片格式: MP4, MOV, AVI 等 (建議大小小於 1GB)',
                 message_label: '留言或祝福（可選填，將與檔案一起上傳）：',
@@ -594,10 +634,10 @@
                 welcome_message: 'Welcome to upload photos or videos you\'d like to share with us 🎞️<br>You can also leave blessings or messages to share your joy 💌<br>Let\'s preserve the joyful moments of our wedding 💖<br><br>✨Upload Steps:<br>Step 1. Enter your name<br>Step 2. Sign in with your Google account<br>Step 3. Share photos, videos, or blessings to capture every touching moment ✨',
                 username_label: 'Friend\'s Name:',
                 username_placeholder: 'Enter your name',
-                login_button: '1. Sign in with Google',
+                login_button: 'Sign in with Google',
                 auth_warning: '✨If you forget your Google account password, contact us via Line anytime✨<br>✨If you see an "unverified" warning, click "Advanced" and "Continue" to sign in✨<br>',
-                photo_button: '📸Select Photos📸',
-                video_button: '🎥Select Videos🎥',
+                photo_button: 'Select Photos',
+                video_button: 'Select Videos',
                 file_info_photo: 'Supported photo formats: JPG, PNG, GIF, etc.',
                 file_info_video: 'Supported video formats: MP4, MOV, AVI, etc. (recommended size < 1GB)',
                 message_label: 'Message or Blessing (optional, will be uploaded with files):',
@@ -618,6 +658,11 @@
                 const key = element.getAttribute('data-i18n');
                 if (translations[lang][key]) {
                     element.innerHTML = translations[lang][key];
+                    // 保留按鈕圖示
+                    if (element.id === 'loginBtn') element.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> ${translations[lang][key]}`;
+                    if (element.id === 'photoBtn') element.innerHTML = `<i class="fa-solid fa-camera"></i> ${translations[lang][key]}`;
+                    if (element.id === 'videoBtn') element.innerHTML = `<i class="fa-solid fa-video"></i> ${translations[lang][key]}`;
+                    if (element.id === 'confirmUploadBtn') element.innerHTML = `<i class="fa-solid fa-heart"></i> ${translations[lang][key]}`;
                 }
             });
 
@@ -635,6 +680,51 @@
             // 頁面載入時滾動到頂部
             window.scrollTo(0, 0);
             log('頁面載入，滾動到頂部');
+
+            // 新增：粒子效果初始化
+            particlesJS('particles-js', {
+                particles: {
+                    number: { value: 50 },
+                    color: { value: '#ff69b4' },
+                    shape: { type: 'image', image: { src: '/images/petal.png', width: 20, height: 20 } }, // 需提供花瓣圖片
+                    opacity: { value: 0.5, random: true },
+                    size: { value: 10, random: true },
+                    move: { enable: true, speed: 2, direction: 'bottom', random: false, out_mode: 'out' }
+                },
+                interactivity: { enable: false }
+            });
+            log('花瓣粒子效果初始化完成');
+
+            // 新增：倒數計時
+            function updateCountdown() {
+                const weddingDate = new Date('2025-06-01T00:00:00'); // 假設婚禮日期為 2025-06-01
+                const now = new Date();
+                const diff = weddingDate - now;
+                const countdownElement = document.getElementById('countdown');
+                if (diff > 0) {
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    countdownElement.textContent = `距離婚禮還有 ${days} 天 ${hours} 小時 ${minutes} 分`;
+                } else {
+                    const daysSince = Math.floor(-diff / (1000 * 60 * 60 * 24));
+                    const hoursSince = Math.floor((-diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutesSince = Math.floor((-diff % (1000 * 60 * 60)) / (1000 * 60));
+                    countdownElement.textContent = `結婚後第 ${daysSince} 天 ${hoursSince} 小時 ${minutesSince} 分`;
+                }
+            }
+            setInterval(updateCountdown, 60000); // 每分鐘更新
+            updateCountdown(); // 立即更新
+            log('倒數計時初始化');
+
+            // 新增：滾動進度條
+            window.addEventListener('scroll', () => {
+                const winScroll = document.documentElement.scrollTop;
+                const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                const scrolled = (winScroll / height) * 100;
+                document.getElementById('scrollProgress').style.width = scrolled + '%';
+                log(`滾動進度: ${scrolled.toFixed(2)}%`);
+            });
 
             const CLIENT_ID = '1059727961676-mba09jlh8is4qrec86o8osrbd3cgld0l.apps.googleusercontent.com';
             const API_KEY = 'AIzaSyDW8iK2KvaYHHTUw-n5cN6n8AfVMm3Msd8';
@@ -669,7 +759,6 @@
             const savedLang = localStorage.getItem('language') || 'zh-TW';
             applyLanguage(savedLang);
 
-            // 語系選擇下拉選單控制
             languageIcon.addEventListener('click', (e) => {
                 e.stopPropagation();
                 languageDropdown.classList.toggle('show');
@@ -685,7 +774,6 @@
                 });
             });
 
-            // 點擊外部關閉選單
             document.addEventListener('click', (e) => {
                 if (!languageIcon.contains(e.target) && !languageDropdown.contains(e.target)) {
                     languageDropdown.classList.remove('show');
@@ -736,13 +824,13 @@
                 if (selectedFiles.length === 0) {
                     previewArea.innerHTML = '<div class="file-info">尚未選擇檔案</div>';
                     confirmUploadBtn.style.display = 'none';
-                    confirmUploadBtn.disabled = true; // Disable button when no files
+                    confirmUploadBtn.disabled = true;
                     log('無選擇檔案，按鈕已禁用');
                     return;
                 }
 
                 confirmUploadBtn.style.display = 'block';
-                confirmUploadBtn.disabled = false; // Enable button when files are selected
+                confirmUploadBtn.disabled = false;
                 previewArea.innerHTML = `<div class="file-info">已選擇 ${selectedFiles.length} 個檔案</div>`;
                 log('有選擇檔案，按鈕已啟用');
 
@@ -803,7 +891,6 @@
                 photoWallGrid.innerHTML = '<div class="photo-wall-loading"><span class="loading-indicator"></span> 載入照片中...</div>';
 
                 try {
-                    // Clear access token to use API_KEY for public access
                     gapi.client.setToken(null);
                     log('已清除訪問令牌，使用 API_KEY 進行公開查詢');
 
@@ -840,7 +927,7 @@
 
                     loadMorePhotos();
                     updateMoreButton();
-                    photoWallGrid.scrollLeft = 0; // Scroll to the leftmost side after loading
+                    photoWallGrid.scrollLeft = 0;
                 } catch (error) {
                     log(`載入照片牆失敗: ${error.message}`);
                     if (error.details) {
@@ -853,10 +940,11 @@
             }
 
             function loadMorePhotos() {
-                const nextFiles = allPhotos.slice(displayedPhotoCount, allPhotos.length); // Load all remaining photos
-                nextFiles.forEach(file => {
+                const nextFiles = allPhotos.slice(displayedPhotoCount, allPhotos.length);
+                nextFiles.forEach((file, index) => {
                     const photoItem = document.createElement('div');
                     photoItem.className = 'photo-wall-item';
+                    photoItem.style.animationDelay = `${index * 0.1}s`; // 滑入動畫延遲
                     const img = document.createElement('img');
                     img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s400') : `https://drive.google.com/uc?id=${file.id}&export=view`;
                     img.alt = file.name;
@@ -873,7 +961,6 @@
                     link.setAttribute('data-title', file.name);
                     link.addEventListener('click', (e) => {
                         log(`嘗試載入大圖: ${largeImageUrl}`);
-                        // Store current displayed photos for Lightbox navigation
                         window.currentDisplayedPhotos = allPhotos.slice(displayedPhotoCount - 5, displayedPhotoCount);
                     });
                     link.appendChild(img);
@@ -882,7 +969,7 @@
                     photoWallGrid.appendChild(photoItem);
                 });
 
-                displayedPhotoCount = allPhotos.length; // Update to total length
+                displayedPhotoCount = allPhotos.length;
                 updateMoreButton();
 
                 if (nextFiles.length > 0) {
@@ -905,7 +992,7 @@
 
                 if (!window.gapi) {
                     log('錯誤: Google API 客戶端未載入');
-                    showMessage('無法載入 Google API 客戶端庫，請檢查網路連線或稍後重試', 'error');
+                    showMessage('無法載入 Google API 客戶端庫，請檢查網路連線或稍後再試', 'error');
                     loginBtn.disabled = false;
                     return;
                 }
@@ -970,19 +1057,18 @@
                     handleFileSelection(e, 'video');
                 });
                 confirmUploadBtn.addEventListener('click', () => {
-                    if (confirmUploadBtn.disabled) return; // Prevent multiple clicks
-                    confirmUploadBtn.disabled = true; // Disable button after first click
+                    if (confirmUploadBtn.disabled) return;
+                    confirmUploadBtn.disabled = true;
                     log('確認上傳按鈕點擊，已禁用按鈕');
                     if (selectedFiles.length > 0) {
                         uploadFiles(selectedFiles, messageInput.value.trim());
                     } else {
                         showMessage('請選擇照片或影片！', 'error');
-                        confirmUploadBtn.disabled = false; // Re-enable if no files
+                        confirmUploadBtn.disabled = false;
                         log('無選擇檔案，按鈕重新啟用');
                     }
                 });
 
-                // Configure Lightbox2 options with navigation handling
                 lightbox.option({
                     'alwaysShowNavOnTouchDevices': true,
                     'wrapAround': true,
@@ -1012,6 +1098,7 @@
                                 nextFiles.forEach(file => {
                                     const photoItem = document.createElement('div');
                                     photoItem.className = 'photo-wall-item';
+                                    photoItem.style.animationDelay = `${nextFiles.indexOf(file) * 0.1}s`;
                                     const img = document.createElement('img');
                                     img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s400') : `https://drive.google.com/uc?id=${file.id}&export=view`;
                                     img.alt = file.name;
@@ -1084,7 +1171,7 @@
                 isAuthenticated = true;
                 log(`授權成功，獲取令牌: ${accessToken.substring(0, 5)}...`);
                 
-                loginBtn.textContent = '✓ Google 帳號已連接';
+                loginBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> ✓ Google 帳號已連接';
                 loginBtn.style.background = '#34a853';
                 uploadArea.style.display = 'block';
                 
@@ -1135,7 +1222,6 @@
                     
                     const prefix = type === 'photo' ? 'photo_' : type === 'video' ? 'video_' : 'message_';
                     
-                    // Use access token for querying user-specific files
                     if (isAuthenticated && accessToken) {
                         gapi.client.setToken({ access_token: accessToken });
                     }
@@ -1162,7 +1248,7 @@
                 
                 if (!username) {
                     showMessage('請輸入姓名！', 'error');
-                    confirmUploadBtn.disabled = false; // Re-enable if username is missing
+                    confirmUploadBtn.disabled = false;
                     log('無用戶名，按鈕重新啟用');
                     return;
                 }
@@ -1186,8 +1272,7 @@
                     const updateProgress = () => {
                         completedFiles++;
                         const targetProgress = (completedFiles / totalFiles) * 100;
-                        // 模擬平滑過渡
-                        const step = 0.5; // 每次增加 0.5%
+                        const step = 0.5;
                         const interval = setInterval(() => {
                             if (currentProgress < targetProgress) {
                                 currentProgress += step;
@@ -1195,7 +1280,6 @@
                                 showMessage(null, 'info', currentProgress);
                             } else {
                                 clearInterval(interval);
-                                // 當所有檔案上傳完成時，顯示成功訊息
                                 if (completedFiles === totalFiles) {
                                     const currentLang = localStorage.getItem('language') || 'zh-TW';
                                     const successMessage = `${photos.length}個照片，${videos.length}個影片${message ? '和留言' : ''}${translations[currentLang].upload_success_message}`;
@@ -1203,7 +1287,7 @@
                                     log('所有文件上傳完畢，顯示成功訊息');
                                 }
                             }
-                        }, 10); // 每 10ms 更新一次
+                        }, 10);
                         log(`進度更新: ${completedFiles}/${totalFiles} (${targetProgress.toFixed(2)}%)`);
                     };
                     
@@ -1244,7 +1328,6 @@
                                 const result = await response.json();
                                 if (response.ok) {
                                     log(`上傳成功: ${fileName} (ID: ${result.id})`);
-                                    // Set public permissions
                                     await gapi.client.drive.permissions.create({
                                         fileId: result.id,
                                         resource: {
@@ -1302,7 +1385,6 @@
                                 const result = await response.json();
                                 if (response.ok) {
                                     log(`上傳成功: ${fileName} (ID: ${result.id})`);
-                                    // Set public permissions
                                     await gapi.client.drive.permissions.create({
                                         fileId: result.id,
                                         resource: {
@@ -1351,7 +1433,6 @@
                             const result = await response.json();
                             if (response.ok) {
                                 log(`留言上傳成功: ${fileName} (ID: ${result.id})`);
-                                // Set public permissions
                                 await gapi.client.drive.permissions.create({
                                     fileId: result.id,
                                     resource: {
@@ -1381,7 +1462,7 @@
                     photoInput.value = '';
                     videoInput.value = '';
                     log('上傳完成，已重置照片、影片和留言輸入框');
-                    previewFiles(); // Reset preview and button state
+                    previewFiles();
                     
                     setTimeout(() => {
                         log('延遲後重新載入照片牆');
@@ -1390,7 +1471,7 @@
                 } catch (error) {
                     log(`上傳過程錯誤: ${error.message}`);
                     showMessage(`上傳錯誤: ${error.message}`, 'error');
-                    confirmUploadBtn.disabled = false; // Re-enable on error
+                    confirmUploadBtn.disabled = false;
                     log('上傳失敗，按鈕重新啟用');
                 }
             }
